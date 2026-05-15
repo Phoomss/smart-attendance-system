@@ -1,9 +1,13 @@
 <?php
 session_start();
+require_once '../../server/conn.php';
 require_once '../../server/user.php';
 
-$user = new User();
-$response = $user->getAllUser();
+$database = new Conn();
+$db = $database->getConnection();
+
+$userModel = new User($db);
+$response = $userModel->getAllUser();
 
 if ($response['success']) {
     $users = $response['data'];
@@ -22,7 +26,6 @@ if ($response['success']) {
     <title>ระบบเข้าออกงาน</title>
     <?php include_once '../layouts/config/libary.php'; ?>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-KyZXEAg3QhqLMpG8r+Knujsl5+5hb7Q5aaC1w8+YdJk=" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 
@@ -49,10 +52,11 @@ if ($response['success']) {
                                     <thead class="thead-dark">
                                         <tr>
                                             <th>#</th>
+                                            <th>รหัสพนักงาน</th>
                                             <th>ชื่อ-นามสกุล</th>
-                                            <th>Phone</th>
-                                            <th>Email</th>
-                                            <th>Role</th>
+                                            <th>เบอร์โทร</th>
+                                            <th>อีเมล</th>
+                                            <th>ตำแหน่ง</th>
                                             <th>จัดการ</th>
                                         </tr>
                                     </thead>
@@ -62,19 +66,20 @@ if ($response['success']) {
                                             <?php foreach ($users as $user) : ?>
                                                 <tr>
                                                     <td><?= $count++; ?></td>
-                                                    <td><?= htmlspecialchars($user['title']) . htmlspecialchars($user['firstname']) . ' ' . htmlspecialchars($user['surname']); ?></td>
-                                                    <td><?= htmlspecialchars($user['phone']); ?></td>
-                                                    <td><?= htmlspecialchars($user['email']); ?></td>
-                                                    <td><?= htmlspecialchars($user['role']); ?></td>
+                                                    <td><?= htmlspecialchars($user['employee_code'] ?? '-'); ?></td>
+                                                    <td><?= htmlspecialchars(($user['title'] ?? '') . ($user['firstname'] ?? '') . ' ' . ($user['surname'] ?? '')); ?></td>
+                                                    <td><?= htmlspecialchars($user['phone'] ?? '-'); ?></td>
+                                                    <td><?= htmlspecialchars($user['email'] ?? '-'); ?></td>
+                                                    <td><?= htmlspecialchars($user['role'] ?? '-'); ?></td>
                                                     <td>
-                                                        <a href="userEdit.php?update=true&id=<?= urlencode($user['id']) ?>" class="btn btn-warning btn-sm">แก้ไข</a>
+                                                        <a href="userEdit.php?id=<?= urlencode($user['id']) ?>" class="btn btn-warning btn-sm">แก้ไข</a>
                                                         <button data-id="<?= $user['id']; ?>" class="btn btn-danger btn-sm deleteBtn">ลบ</button>
                                                     </td>
                                                 </tr>
                                             <?php endforeach; ?>
                                         <?php else : ?>
                                             <tr>
-                                                <td colspan="6" class="text-center">ไม่มีข้อมูลพนักงาน</td>
+                                                <td colspan="7" class="text-center">ไม่มีข้อมูลพนักงาน</td>
                                             </tr>
                                         <?php endif; ?>
                                     </tbody>
@@ -117,20 +122,16 @@ if ($response['success']) {
                             action: 'delete',
                             id: id
                         },
+                        dataType: "json",
                         success: function(response) {
-                            try {
-                                const res = JSON.parse(response);
-                                if (res.status === 'success') {
-                                    Swal.fire(
-                                        'ลบแล้ว!',
-                                        res.message,
-                                        'success'
-                                    ).then(() => location.reload());
-                                } else {
-                                    Swal.fire('ผิดพลาด', res.message, 'error');
-                                }
-                            } catch (e) {
-                                Swal.fire('ผิดพลาด', 'เกิดข้อผิดพลาดในการประมวลผล', 'error');
+                            if (response.success) {
+                                Swal.fire(
+                                    'ลบแล้ว!',
+                                    response.message,
+                                    'success'
+                                ).then(() => location.reload());
+                            } else {
+                                Swal.fire('ผิดพลาด', response.message, 'error');
                             }
                         },
                         error: function() {

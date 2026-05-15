@@ -1,9 +1,13 @@
 <?php
 session_start();
-require_once '../../server/user.php';
 require_once '../../server/conn.php';
+require_once '../../server/user.php';
 require_once '../../server/attendance.php';
 require_once '../../server/detailWork.php';
+
+// Initialize Database Connection once
+$database = new Conn();
+$db = $database->getConnection();
 ?>
 
 <!DOCTYPE html>
@@ -32,7 +36,10 @@ require_once '../../server/detailWork.php';
                         <h1 class="h3 mb-0 text-gray-800">รายงานเข้าออกงาน</h1>
                     </div>
 
-                    <?php require_once 'attendanceDetail.php';?>
+                    <?php 
+                    // The required file will use the initialized $db connection
+                    require_once 'attendanceDetail.php';
+                    ?>
                 </div>
                 <!-- /.container-fluid -->
 
