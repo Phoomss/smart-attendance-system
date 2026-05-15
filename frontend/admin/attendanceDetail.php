@@ -1,12 +1,11 @@
 <?php
-$user = new User();
-$response = $user->getAllUser();
+// Note: $db is expected to be defined by the parent file (attendanceReport.php)
+$userModel = new User($db);
+$response = $userModel->getAllUser();
 
-if ($response['success']) {
-    $users = $response['data'];
-} else {
-    $users = []; // Ensure an empty array if no data is retrieved
-    error_log($response['message']); // Optional: Log the error message
+$users = ($response['success']) ? $response['data'] : [];
+if (!$response['success']) {
+    error_log($response['message']);
 }
 ?>
 <div class="row justify-content-center">
@@ -18,9 +17,7 @@ if ($response['success']) {
                         <div class="d-flex align-items-center mb-3">
                             <i class="fas fa-user-circle fa-3x text-primary me-3 "></i>
                             <h5 class="card-title mb-0 ml-2">
-                                <?= htmlspecialchars($user['title'] ?? 'N/A') ?>
-                                <?= htmlspecialchars($user['firstname'] ?? 'Unknown') ?>
-                                <?= htmlspecialchars($user['surname'] ?? 'Unknown') ?>
+                                <?= htmlspecialchars(($user['title'] ?? '') . ' ' . ($user['firstname'] ?? '') . ' ' . ($user['surname'] ?? '')) ?>
                             </h5>
                         </div>
                         <p class="text-muted mb-1">
@@ -39,7 +36,7 @@ if ($response['success']) {
     <?php else: ?>
         <div class="col-12">
             <div class="alert alert-warning text-center">
-                <?= htmlspecialchars($response['message']) ?>
+                <?= htmlspecialchars($response['message'] ?? 'ไม่พบข้อมูลผู้ใช้') ?>
             </div>
         </div>
     <?php endif; ?>

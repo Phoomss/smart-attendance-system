@@ -1,80 +1,72 @@
 <?php
-    require_once '../server/conn.php';
-    require_once '../server/leave.php';
+require_once '../server/conn.php';
+require_once '../server/leave.php';
 
-    session_start();
+session_start();
 
-    $database = new Conn();
-    $db = $database->getConnection();
+$database = new Conn();
+$db = $database->getConnection();
+$leave = new Leave($db);
 
-    $leave = new Leave($db);
+header('Content-Type: application/json');
 
-    if($_SERVER['REQUEST_METHOD'] === 'POST'){
-        if(isset($_POST['action'])){
-            $action = $_POST['action'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $action = $_POST['action'] ?? '';
 
-            if($action === 'create'){
-                $leave->employee_id = $_POST['employee_id'];
-                $leave->leave_type = $_POST['leave_type'];
-                $leave->leave_date = $_POST['leave_date'];
-                $leave->reason = $_POST['reason'];
+    switch ($action) {
+        case 'create':
+            $leave->employee_id = $_POST['employee_id'] ?? 0;
+            $leave->leave_type = $_POST['leave_type'] ?? '';
+            $leave->leave_date = $_POST['leave_date'] ?? '';
+            $leave->leave_end_date = $_POST['leave_end_date'] ?? null;
+            $leave->reason = $_POST['reason'] ?? '';
 
-                $stmt = $leave->create();
+            // Handle file upload
+            if (isset($_FILES['attachment']) && $_FILES['attachment']['error'] === UPLOAD_ERR_OK) {
+                $uploadDir = '../public/uploads/leaves/';
+                $fileExt = pathinfo($_FILES['attachment']['name'], PATHINFO_EXTENSION);
+                $newFileName = uniqid('leave_', true) . '.' . $fileExt;
+                $uploadFile = $uploadDir . $newFileName;
 
-                if($stmt){
-                    echo json_encode([
-                        "success" => true,
-                        "message" => "บันทึกข้อมูลสำเร็จ",
-                        "status_code" => 200,
-                    ]);
-                }else{
-                    echo json_encode([
-                        "success" => false,
-                        "message" => "บันทึกข้อมูลไม่สำเร็จ",
-                        "status_code" => 500,
-                    ]);
-                }
-            }else if($action === 'update'){
-                $leave->id = $_POST['id'];
-                $leave->employee_id = $_POST['employee_id'];
-                $leave->leave_type = $_POST['leave_type'];
-                $leave->leave_date = $_POST['leave_date'];
-                $leave->reason = $_POST['reason'];
-
-                $stmt = $leave->update();
-
-                if($stmt){
-                    echo json_encode([
-                        "success" => true,
-                        "message" => "แก้ไขข้อมูลสำเร็จ",
-                        "status_code" => 200,
-                    ]);
-                }else{
-                    echo json_encode([
-                        "success" => false,
-                        "message" => "แก้ไขข้อมูลไม่สำเร็จ",
-                        "status_code" => 500,
-                    ]);
-                }
-            }else if($action === 'delete'){
-                $leave->id = $_POST['id'];
-
-                $stmt = $leave->delete();
-
-                if($stmt){
-                    echo json_encode([
-                        "success" => true,
-                        "message" => "ลบข้อมูลสำเร็จ",
-                        "status_code" => 200,
-                    ]);
-                }else{
-                    echo json_encode([
-                        "success" => false,
-                        "message" => "ลบข้อมูลไม่สำเร็จ",
-                        "status_code" => 500,
-                    ]);
+                if (move_uploaded_file($_FILES['attachment']['tmp_name'], $uploadFile)) {
+                    $leave->attachment_path = $newFileName;
                 }
             }
-        }
+
+            if ($leave->create()) {
+                echo json_encode(["success" => true, "message" => "บันทึกการลาสำเร็จ", "status_code" => 200]);
+            } else {
+                echo json_encode(["success" => false, "message" => "บันทึกไม่สำเร็จ", "status_code" => 500]);
+            }
+            break;
+
+        case 'update':
+            $leave->id = $_POST['id'] ?? 0;
+            $leave->employee_id = $_POST['employee_id'] ?? 0;
+            $leave->leave_type = $_POST['leave_type'] ?? '';
+            $leave->leave_date = $_POST['leave_date'] ?? '';
+            $leave->leave_end_date = $_POST['leave_end_date'] ?? null;
+            $leave->reason = $_POST['reason'] ?? '';
+            $leave->status = $_POST['status'] ?? 'pending';
+
+            if ($leave->update()) {
+                echo json_encode(["success" => true, "message" => "แก้ไขข้อมูลสำเร็จ", "status_code" => 200]);
+            } else {
+                echo json_encode(["success" => false, "message" => "แก้ไขไม่สำเร็จ", "status_code" => 500]);
+            }
+            break;
+
+        case 'delete':
+            $leave->id = $_POST['id'] ?? 0;
+            if ($leave->delete()) {
+                echo json_encode(["success" => true, "message" => "ลบข้อมูลสำเร็จ", "status_code" => 200]);
+            } else {
+                echo json_encode(["success" => false, "message" => "ลบไม่สำเร็จ", "status_code" => 500]);
+            }
+            break;
+
+        default:
+            echo json_encode(["success" => false, "message" => "Invalid action", "status_code" => 404]);
+            break;
     }
-?>
+}

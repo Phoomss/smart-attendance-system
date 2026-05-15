@@ -1,0 +1,141 @@
+:root {
+    --saas-primary: #4F46E5;
+    --saas-primary-hover: #4338CA;
+    --saas-bg: #F9FAFB;
+    --saas-card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --bg-gradient: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%);
+}
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--saas-bg);
+    color: #111827;
+}
+body.auth-page {
+    background: var(--bg-gradient);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+}
+.card {
+    border: none;
+    border-radius: 0.75rem;
+    box-shadow: var(--saas-card-shadow);
+}
+.auth-card {
+    border-radius: 1.5rem;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+    background: #ffffff;
+}
+.sidebar {
+    min-width: 260px;
+    max-width: 260px;
+    background: #ffffff;
+    border-right: 1px solid #E5E7EB;
+    transition: all 0.2s ease-in-out;
+    z-index: 1000;
+}
+.sidebar.collapsed {
+    min-width: 80px;
+    max-width: 80px;
+}
+.sidebar.collapsed .sidebar-brand-text,
+.sidebar.collapsed .nav-link span,
+.sidebar.collapsed hr,
+.sidebar.collapsed strong {
+    display: none;
+}
+.sidebar.collapsed .nav-link {
+    text-align: center;
+    padding: 0.75rem;
+}
+.sidebar.collapsed .nav-link i {
+    margin-right: 0 !important;
+    font-size: 1.25rem;
+}
+.nav-link {
+    color: #4B5563;
+    padding: 0.75rem 1.25rem;
+    border-radius: 0.5rem;
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+    transition: all 0.2s;
+}
+.nav-link i {
+    width: 1.5rem;
+    margin-right: 0.75rem;
+}
+.nav-link:hover {
+    background-color: #F3F4F6;
+    color: var(--saas-primary);
+}
+.nav-link.active {
+    background-color: #EEF2FF;
+    color: var(--saas-primary);
+    font-weight: 600;
+}
+.topbar {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid #E5E7EB;
+    position: sticky;
+    top: 0;
+    z-index: 999;
+}
+.btn-primary {
+    background-color: var(--saas-primary);
+    border-color: var(--saas-primary);
+}
+.btn-primary:hover {
+    background-color: var(--saas-primary-hover);
+    border-color: var(--saas-primary-hover);
+}
+.auth-page .btn-primary {
+    padding: 0.75rem;
+    font-weight: 600;
+}
+.btn-line {
+    background-color: #06C755;
+    color: white;
+    padding: 0.75rem;
+    font-weight: 600;
+}
+.btn-line:hover {
+    background-color: #05b34c;
+    color: white;
+}
+.form-control:focus, .form-select:focus {
+    border-color: var(--saas-primary);
+    box-shadow: 0 0 0 0.25rem rgba(79, 70, 229, 0.1);
+}
+.auth-page .input-group-text {
+    background-color: #F9FAFB;
+    border-right: none;
+}
+.auth-page .form-control {
+    border-left: none;
+    padding: 0.75rem;
+}
+.auth-page .form-control:focus {
+    box-shadow: none;
+    border-color: #D1D5DB;
+}
+.table thead th {
+    background-color: #F9FAFB;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.025em;
+    color: #6B7280;
+    border-top: none;
+}
+.illustration {
+    background: var(--saas-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+}
+.transition-hover { transition: transform 0.2s, box-shadow 0.2s; }
+.transition-hover:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1) !important; }

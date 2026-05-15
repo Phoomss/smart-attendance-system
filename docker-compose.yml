@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  # PHP Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: attendance-app
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT}:80"
+    volumes:
+      - .:/var/www/html
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - LINE_CLIENT_ID=${LINE_CLIENT_ID}
+      - LINE_CLIENT_SECRET=${LINE_CLIENT_SECRET}
+      - LINE_REDIRECT_URL=${LINE_REDIRECT_URL}
+    depends_on:
+      - db
+    networks:
+      - attendance-network
+
+  # MySQL Database
+  db:
+    image: mysql:8.0
+    container_name: attendance-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - db-data:/var/lib/mysql
+      - ./attendance_db.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - attendance-network
+
+networks:
+  attendance-network:
+    driver: bridge
+
+volumes:
+  db-data:

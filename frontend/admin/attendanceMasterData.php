@@ -1,127 +1,114 @@
 <?php
 session_start();
-require_once '../../server/user.php';
 require_once '../../server/conn.php';
+require_once '../../server/user.php';
 require_once '../../server/attendance.php';
 require_once '../../server/detailWork.php';
 
-$employee_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+$database = new Conn();
+$db = $database->getConnection();
 
-if ($employee_id > 0) {
-    $detailWork = new DetailWork();
-    $info = $detailWork->readInfo($employee_id);
-
-    $user = new User();
-    $response = $user->getUserInfo($employee_id);
-    if ($response['success']) {
-        $userInfo = $response['data'];
-    } else {
-        $userInfo = [];
-        error_log($response['message']);
-    }
-} else {
-    $errorMessage = "Invalid user ID.";
+$id = $_GET['id'] ?? 0;
+if ($id <= 0) {
+    header('Location: attendanceReport.php');
+    exit();
 }
+
+$userModel = new User($db);
+$userData = $userModel->getUserInfo($id)['data'] ?? null;
+$detailWork = new DetailWork($db);
+$info = $detailWork->readInfo($id);
+
+if (!$userData) {
+    header('Location: attendanceReport.php');
+    exit();
+}
+ob_start();
 ?>
-
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบเข้าออกงาน</title>
-    <?php include_once '../layouts/config/libary.php' ?>
-
-</head>
-
-<body id="page-top">
-    <div id="wrapper">
-        <?php include_once '../layouts/sidenav.php' ?>
-
-        <div id="content-wrapper" class="d-flex flex-column">
-            <!-- Main Content -->
-            <div id="content">
-                <?php include_once '../layouts/navbar.php' ?>
-             
-                <!-- Begin Page Content -->
-                <div class="container-fluid">
-                    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-                        <h1 class="h3 mb-0 text-gray-800">รายงานเข้าออกงาน</h1>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h1 class="h3 fw-bold text-dark mb-1">ประวัติการเข้างาน</h1>
+                        <p class="text-muted small">ข้อมูลของ: <?= htmlspecialchars(($userData['title'] ?? '') . $userData['firstname'] . ' ' . $userData['surname']) ?></p>
                     </div>
+                    <a href="attendanceReport.php" class="btn btn-light rounded-pill px-3"><i class="fas fa-arrow-left me-2"></i> กลับ</a>
+                </div>
 
-                    <div class="card shadow mb-4">
-                        <div class="card-header py-3">
-                            <h6 class="m-0 font-weight-bold text-primary">ข้อมูลการเข้าออกงานของ <?php echo htmlentities($userInfo['title']) ?><?php echo htmlentities($userInfo['firstname']) ?> <?php echo htmlentities($userInfo['surname']) ?></h6>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-bordered table-striped" id="dataTable" width="100%" cellspacing="0">
-                                    <thead class="thead-dark">
-                                        <tr>
-                                            <th>#</th>
-                                            <th>เวลาเข้า</th>
-                                            <th>เวลาออก</th>
-                                            <th>ประเภทการลา</th>
-                                            <th>วันที่ลา</th>
-                                            <th>เหตุผล</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php
-                                        if ($info) {
-                                            $index = 1;
-
-                                            // Display attendance data
-                                            foreach ($info['attendance'] as $attendanceRow) {
-                                                $attendance_time = isset($attendanceRow['created_at']) ? $attendanceRow['created_at'] : 'ไม่มีข้อมูลการเข้าทำงาน';
-                                                $departure_time = isset($attendanceRow['departure_time']) ? $attendanceRow['departure_time'] : 'ไม่มีข้อมูลการออกงาน';
-                                                echo "<tr>
-                                                        <th scope='row'>{$index}</th>
-                                                        <td>{$attendance_time}</td>
-                                                        <td>{$departure_time}</td>
-                                                        <td>-</td> <!-- No leave data for this row -->
-                                                        <td>-</td> <!-- No leave date for this row -->
-                                                        <td>-</td> <!-- No reason for this row -->
-                                                      </tr>";
-                                                $index++;
-                                            }
-
-                                            // Display leave data
-                                            foreach ($info['leave'] as $leaveRow) {
-                                                echo "<tr>
-                                                        <th scope='row'>{$index}</th>
-                                                        <td>-</td> <!-- No attendance data for this row -->
-                                                        <td>-</td> <!-- No departure time for this row -->
-                                                        <td>{$leaveRow['leave_type']}</td>
-                                                        <td>{$leaveRow['leave_date']}</td>
-                                                        <td>" . (empty($leaveRow['reason']) ? '-' : $leaveRow['reason']) . "</td> <!-- Use '-' if reason is empty -->
-                                                      </tr>";
-                                                $index++;
-                                            }
-                                        } else {
-                                            echo "<tr><td colspan='6' class='text-center'>ไม่พบข้อมูล</td></tr>";
-                                        }
-                                        ?>
-                                    </tbody>
-                                </table>
-                            </div>
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="bg-light text-muted small text-uppercase">
+                                    <tr>
+                                        <th class="px-4 py-3">#</th>
+                                        <th class="py-3">ประเภท</th>
+                                        <th class="py-3">วัน/เวลา</th>
+                                        <th class="py-3">เวลาออก</th>
+                                        <th class="px-4 py-3 text-center">สถานะ/เหตุผล</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php if ($info): ?>
+                                        <?php $idx = 1; ?>
+                                        <?php foreach ($info['attendance'] as $row): ?>
+                                            <tr>
+                                                <td class="px-4"><?= $idx++ ?></td>
+                                                <td><span class="badge bg-primary-subtle text-primary rounded-pill px-3">เข้างาน</span></td>
+                                                <td><div class="fw-bold text-dark"><?= htmlspecialchars($row['attendance_date']) ?></div><div class="small text-muted"><?= (!empty($row['attendance_time'])) ? htmlspecialchars(date('H:i', strtotime($row['attendance_time']))) : '--:--' ?> น.</div></td>
+                                                <td>
+                                                    <?= $row['departure_time'] ? htmlspecialchars(date('H:i', strtotime($row['departure_time']))) . ' น.' : '<span class="text-muted small italic">ยังไม่บันทึก</span>' ?>
+                                                    <?php if (!empty($row['latitude']) && !empty($row['longitude'])): ?>
+                                                        <div class="mt-1">
+                                                            <a href="https://www.google.com/maps?q=<?= $row['latitude'] ?>,<?= $row['longitude'] ?>" target="_blank" class="badge bg-light text-primary text-decoration-none border">
+                                                                <i class="fas fa-map-marker-alt me-1"></i> ดูพิกัด
+                                                            </a>
+                                                        </div>
+                                                    <?php endif; ?>
+                                                </td>
+                                                <td class="text-center px-4">
+                                                    <?php if ($row['status'] == 'on_time'): ?>
+                                                        <span class="badge bg-success-subtle text-success rounded-pill px-3">ปกติ</span>
+                                                    <?php else: ?>
+                                                        <span class="badge bg-warning-subtle text-warning rounded-pill px-3">สาย</span>
+                                                    <?php endif; ?>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                        <?php foreach ($info['leave'] as $row): ?>
+                                            <tr class="bg-light-subtle">
+                                                <td class="px-4"><?= $idx++ ?></td>
+                                                <td><span class="badge bg-info-subtle text-info rounded-pill px-3">ลา (<?= $row['leave_type'] ?>)</span></td>
+                                                <td><div class="fw-bold text-dark"><?= htmlspecialchars($row['leave_date']) ?></div><div class="small text-muted">ถึง <?= htmlspecialchars($row['leave_end_date'] ?? $row['leave_date']) ?></div></td>
+                                                <td>
+                                                    <?php if (!empty($row['attachment_path'])): ?>
+                                                        <a href="../../public/uploads/leaves/<?= htmlspecialchars($row['attachment_path']) ?>" target="_blank" class="btn btn-sm btn-outline-info rounded-pill">
+                                                            <i class="fas fa-paperclip me-1"></i> ดูไฟล์แนบ
+                                                        </a>
+                                                    <?php else: ?>
+                                                        <span class="text-muted small">-</span>
+                                                    <?php endif; ?>
+                                                </td>
+                                                <td class="px-4">
+                                                    <div class="small text-dark fw-bold"><?= htmlspecialchars($row['reason'] ?? '-') ?></div>
+                                                    <div class="small text-muted italic">(<?= htmlspecialchars($row['status']) ?>)</div>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <tr><td colspan="5" class="text-center py-5 text-muted">ไม่พบข้อมูลการทำงาน</td></tr>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
-                <!-- /.container-fluid -->
-            </div>
-        </div>
-        <!-- /.container-fluid -->
+<?php
+$content = ob_get_clean();
 
-    </div>
-    <!-- End of Main Content -->
+ob_start();
+?>
+<?php
+$scripts = ob_get_clean();
 
-    <?php include_once '../layouts/footer.php' ?>
-    </div>
-    </div>
-
-    <?php include_once '../layouts/config/script.php' ?>
-</body>
-
-</html>
+require_once '../layouts/core/app.php';
+renderLayout('ประวัติพนักงาน', $content, $scripts);
+?>

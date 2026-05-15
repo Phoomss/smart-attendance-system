@@ -8,104 +8,54 @@ $database = new Conn();
 $db = $database->getConnection();
 $user = new User($db);
 
+header('Content-Type: application/json');
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['action'])) {
-        $action = $_POST['action'];
+    $action = $_POST['action'] ?? '';
 
-        if ($action === 'update') {
-            $id = $_POST['id'];
-            $user->title = $_POST['title'];
-            $user->firstname = $_POST['firstname'];
-            $user->surname = $_POST['surname'];
-            $user->username = $_POST['username'];
-            $user->phone = $_POST['phone'];
-            $user->email = $_POST['email'];
+    switch ($action) {
+        case 'getAll':
+            echo json_encode($user->getAllUser());
+            break;
 
-            if (!empty($_POST['password'])) {
-                $user->password = $_POST['password'];
-            }
+        case 'getInfo':
+            $id = $_POST['id'] ?? 0;
+            echo json_encode($user->getUserInfo($id));
+            break;
 
-            $stmt = $user->update($id);
+        case 'update':
+            $id = $_POST['id'] ?? 0;
+            $user->employee_code = trim($_POST['employee_code'] ?? '');
+            $user->title = trim($_POST['title'] ?? '');
+            $user->firstname = trim($_POST['firstname'] ?? '');
+            $user->surname = trim($_POST['surname'] ?? '');
+            $user->username = trim($_POST['username'] ?? '');
+            $user->phone = trim($_POST['phone'] ?? '');
+            $user->email = trim($_POST['email'] ?? '');
+            $user->password = $_POST['password'] ?? ''; // No trim on password
 
-            if ($stmt['success']) {
-                echo json_encode([
-                    "success" => true,
-                    "message" => $stmt['message'],
-                    "status_code" => 200,
-                ]);
+            // Convert empty strings to null for unique fields
+            if (empty($user->employee_code)) $user->employee_code = null;
+            if (empty($user->phone)) $user->phone = null;
+
+            if ($user->update($id)) {
+                echo json_encode(["success" => true, "message" => "อัปเดตข้อมูลสำเร็จ", "status_code" => 200]);
             } else {
-                echo json_encode([
-                    "success" => false,
-                    "message" => $stmt['message'],
-                    "status_code" => 500,
-                ]);
+                echo json_encode(["success" => false, "message" => "อัปเดตไม่สำเร็จ", "status_code" => 500]);
             }
-        } else {
-            echo json_encode([
-                "success" => false,
-                "message" => "แก้ไขข้อมูลไม่สำเร็จ",
-                "status_code" => 500,
-            ]);
-        }
-    } 
-    // else if ($action === 'updateProfile') {
-    //     if (!isset($_POST['id']) || empty($_POST['id'])) {
-    //         echo json_encode([
-    //             "success" => false,
-    //             "message" => "ไม่ได้ระบุ ID ของผู้ใช้",
-    //             "status_code" => 400,
-    //         ]);
-    //         exit;
-    //     }
+            break;
 
-    //     $id = $_POST['id'];
-    //     $user->title = $_POST['title'];
-    //     $user->firstname = $_POST['firstname'];
-    //     $user->surname = $_POST['surname'];
-    //     $user->username = $_POST['username'];
-    //     $user->phone = $_POST['phone'];
-    //     $user->email = $_POST['email'];
+        case 'delete':
+            $id = $_POST['id'] ?? 0;
+            if ($user->delete($id)) {
+                echo json_encode(["success" => true, "message" => "ลบข้อมูลสำเร็จ", "status_code" => 200]);
+            } else {
+                echo json_encode(["success" => false, "message" => "ลบไม่สำเร็จ", "status_code" => 500]);
+            }
+            break;
 
-    //     // หากมีการเปลี่ยนรหัสผ่าน
-    //     if (!empty($_POST['password'])) {
-    //         $user->password = $_POST['password'];
-    //     }
-
-    //     $stmt = $user->updateProfile($id);
-
-    //     if ($stmt['success']) {
-    //         echo json_encode([
-    //             "success" => true,
-    //             "message" => $stmt['message'],
-    //             "status_code" => 200,
-    //         ]);
-    //     } else {
-    //         echo json_encode([
-    //             "success" => false,
-    //             "message" => $stmt['message'],
-    //             "status_code" => 500,
-    //         ]);
-    //     }
-    // }
-} else if ($action === 'delete') {
-    $id = $_POST['id']; // ตรวจสอบว่ามีการส่ง id มา
-    if (!empty($id)) {
-        $result = $user->delete($id);
-        if ($result['success']) {
-            echo json_encode([
-                "status" => "success",
-                "message" => $result['message'],
-            ]);
-        } else {
-            echo json_encode([
-                "status" => "error",
-                "message" => $result['message'],
-            ]);
-        }
-    } else {
-        echo json_encode([
-            "status" => "error",
-            "message" => "ไม่มี ID ที่ต้องการลบ",
-        ]);
+        default:
+            echo json_encode(["success" => false, "message" => "Invalid action", "status_code" => 404]);
+            break;
     }
 }

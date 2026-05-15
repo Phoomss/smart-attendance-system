@@ -1,217 +1,165 @@
 <?php
 session_start();
-
 require_once '../../server/conn.php';
-require_once '../../server/attendance.php';
 require_once '../../server/detailWork.php';
 
-// Ensure session variables are set
+$database = new Conn();
+$db = $database->getConnection();
+
 if (!isset($_SESSION['profile']) && !isset($_SESSION['userInfo'])) {
-    die("Session data is missing.");
+    header('Location: ../../index.php');
+    exit();
 }
 
-$profile = isset($_SESSION['profile']) ? $_SESSION['profile'] : null;
-$userInfo = isset($_SESSION['userInfo']) ? $_SESSION['userInfo'] : null;
-
-// Determine which email to use
-if ($profile && isset($profile->email)) {
-    $user_sesstion = $profile->email; // Use email from profile object
-} else {
-    $user_sesstion = $userInfo['email']; // Use email from userInfo array
-}
-
-// Check if user_sesstion contains an email
-if (!$user_sesstion) {
-    die("No email found in session data.");
-}
-
-// Fetch user data from database using email
-$stmt = $conn->prepare("SELECT id, title, firstname, surname, name, username, phone, email, picture, role FROM users WHERE email = :email");
-$stmt->bindParam(':email', $user_sesstion);
-$stmt->execute();
+$userEmail = ($_SESSION['profile']->email ?? '') ?: ($_SESSION['userInfo']['email'] ?? '');
+$stmt = $db->prepare("SELECT id, title, firstname, surname FROM users WHERE email = :email LIMIT 1");
+$stmt->execute([':email' => $userEmail]);
 $userData = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$userData) {
-    die("User not found.");
-}
-// Continue with user data
+if (!$userData) die("User not found.");
+
 $employee_id = $userData['id'];
-
-// Create an instance of DetailWork class
-$detailWork = new DetailWork();
-
-// Get the employee information
+$detailWork = new DetailWork($db);
 $info = $detailWork->readInfo($employee_id);
 
-// จำนวนรายการที่แสดงต่อหน้า
 $itemsPerPage = 10;
-
-// คำนวณหน้าปัจจุบัน
 $currentPage = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $startLimit = ($currentPage - 1) * $itemsPerPage;
 
-// Combine attendance and leave data into a single array for easier pagination
 $combinedData = array_merge($info['attendance'], $info['leave']);
-$totalItems = count($combinedData);
-$totalPages = ceil($totalItems / $itemsPerPage);
 
-// ดึงข้อมูลเฉพาะหน้า
-$pageData = array_slice($combinedData, $startLimit, $itemsPerPage);
+// Filtering logic
+$searchDate = $_GET['searchDate'] ?? '';
+$leaveType = $_GET['leave_type'] ?? '';
 
-// Handle date search
-$searchDate = isset($_GET['searchDate']) ? $_GET['searchDate'] : '';
-
-// Get the leave type from the GET request
-$leaveType = isset($_GET['leave_type']) ? $_GET['leave_type'] : '';
-
-// Filter the combined data based on the search date and leave type
 if ($searchDate || $leaveType) {
     $combinedData = array_filter($combinedData, function ($row) use ($searchDate, $leaveType) {
-        $matchDate = true;
-        $matchLeaveType = true;
-
-        // Check date filter
-        if ($searchDate) {
-            if (isset($row['leave_date']) && $row['leave_date'] != $searchDate) {
-                $matchDate = false;
-            } elseif (isset($row['created_at']) && $row['created_at'] != $searchDate) {
-                $matchDate = false;
-            }
-        }
-
-        // Check leave type filter
-        if ($leaveType && isset($row['leave_type']) && $row['leave_type'] != $leaveType) {
-            $matchLeaveType = false;
-        }
-
-        return $matchDate && $matchLeaveType;
+        $rowDate = $row['leave_date'] ?? date('Y-m-d', strtotime($row['created_at']));
+        $matchDate = !$searchDate || ($rowDate == $searchDate);
+        $matchType = !$leaveType || ($row['leave_type'] ?? '') == $leaveType;
+        return $matchDate && $matchType;
     });
-
-    // Update pagination with filtered data
-    $totalItems = count($combinedData);
-    $totalPages = ceil($totalItems / $itemsPerPage);
-    $pageData = array_slice($combinedData, $startLimit, $itemsPerPage);
 }
 
-// Function to render rows
-function renderRow($index, $row)
-{
-    if (isset($row['leave_type'])) {  // Leave data
-        $attendanceTime = '-';
-        $departureTime = '-';
-        $leaveType = $row['leave_type'];
-        $leaveDate = $row['leave_date'];
-        $reason = empty($row['reason']) ? '-' : $row['reason'];
-    } else {  // Attendance data
-        $attendanceTime = isset($row['created_at']) ? $row['created_at'] : 'ไม่มีข้อมูลการเข้าทำงาน';
-        $departureTime = isset($row['departure_time']) ? $row['departure_time'] : 'ไม่มีข้อมูลการออกงาน';
-        $leaveType = '-';
-        $leaveDate = '-';
-        $reason = '-';
-    }
-
-    echo "<tr>
-            <th scope='row'>{$index}</th>
-            <td>{$row['title']} {$row['firstname']} {$row['surname']}</td>
-            <td>{$attendanceTime}</td>
-            <td>{$departureTime}</td>
-            <td>{$leaveType}</td>
-            <td>{$leaveDate}</td>
-            <td>{$reason}</td>
-          </tr>";
-}
+$totalItems = count($combinedData);
+$totalPages = ceil($totalItems / $itemsPerPage);
+$pageData = array_slice($combinedData, $startLimit, $itemsPerPage);
+ob_start();
 ?>
+                <div class="mb-4">
+                    <h1 class="h3 fw-bold text-dark">ประวัติการเข้างานและลางาน</h1>
+                    <p class="text-muted small">ตรวจสอบและค้นหาประวัติการทำงานของคุณย้อนหลัง</p>
+                </div>
 
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Attendance and Leave Records</title>
-    <?php require_once '../../script/script.js' ?>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-    <link rel="stylesheet" href="style.css">
-</head>
-
-<body>
-    <?php require_once 'navbar.php'; ?>
-    <div class="container my-5">
-        <div class="row">
-            <div class="col-md-4">
-                <?php require_once 'reportCard.php' ?>
-            </div>
-            <div class="col-md-8">
-                <!-- Search Form -->
-                <form method="GET" class="mb-4">
-                    <div class="row">
-                        <div class="col-md-3">
-                            <input type="date" class="form-control" name="searchDate" value="<?= $searchDate ?>">
-                        </div>
-                        <div class="col-md-3">
-                            <select class="form-control" name="leave_type">
-                                <option value="">-- เลือกประเภทการลา --</option>
-                                <option value="ลาป่วย" <?= $leaveType == 'ลาป่วย' ? 'selected' : '' ?>>ลาป่วย</option>
-                                <option value="ลากิจ" <?= $leaveType == 'ลากิจ' ? 'selected' : '' ?>>ลากิจ</option>
-                                <!-- Add more leave types as needed -->
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <button type="submit" class="btn btn-primary">ค้นหา</button>
+                <div class="row g-4">
+                    <div class="col-lg-3">
+                        <?php include_once 'reportCard.php' ?>
+                        
+                        <div class="card border-0 shadow-sm mt-4">
+                            <div class="card-body p-4">
+                                <h6 class="fw-bold text-dark mb-3">ตัวกรองข้อมูล</h6>
+                                <form method="GET" class="space-y-3">
+                                    <div class="mb-3">
+                                        <label class="form-label small text-muted">วันที่</label>
+                                        <input type="date" class="form-control" name="searchDate" value="<?= htmlspecialchars($searchDate) ?>">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label small text-muted">ประเภทการลา</label>
+                                        <select class="form-select text-sm" name="leave_type">
+                                            <option value="">-- ทั้งหมด --</option>
+                                            <option value="ลาป่วย" <?= $leaveType == 'ลาป่วย' ? 'selected' : '' ?>>ลาป่วย</option>
+                                            <option value="ลากิจ" <?= $leaveType == 'ลากิจ' ? 'selected' : '' ?>>ลากิจ</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary w-100 rounded-pill">
+                                        <i class="fas fa-search me-2"></i> ค้นหา
+                                    </button>
+                                    <?php if($searchDate || $leaveType): ?>
+                                        <a href="reportAttendance.php" class="btn btn-light w-100 rounded-pill mt-2 small">ล้างค่า</a>
+                                    <?php endif; ?>
+                                </form>
+                            </div>
                         </div>
                     </div>
-                </form>
 
-                <!-- Table -->
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover table-bordered">
-                        <thead class="table-dark">
-                            <tr>
-                                <th scope="col">#</th>
-                                <th scope="col">ชื่อ</th>
-                                <th scope="col">เวลาเข้า</th>
-                                <th scope="col">เวลาออก</th>
-                                <th scope="col">ประเภทการลา</th>
-                                <th scope="col">วันที่ลา</th>
-                                <th scope="col">เหตุผล</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php
-                            if ($pageData) {
-                                $index = $startLimit + 1;
-                                foreach ($pageData as $row) {
-                                    renderRow($index, $row);
-                                    $index++;
-                                }
-                            } else {
-                                echo "<tr><td colspan='7' class='text-center'>ไม่พบข้อมูล</td></tr>";
-                            }
-                            ?>
-                        </tbody>
-                    </table>
+                    <div class="col-lg-9">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0">
+                                        <thead class="bg-light text-muted small text-uppercase">
+                                            <tr>
+                                                <th class="px-4 py-3">ประเภท</th>
+                                                <th class="py-3">วัน/เวลา</th>
+                                                <th class="py-3">เวลาออก</th>
+                                                <th class="px-4 py-3">สถานะ/เหตุผล</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php if ($pageData): ?>
+                                                <?php foreach ($pageData as $row): ?>
+                                                    <?php $isLeave = isset($row['leave_type']); ?>
+                                                    <tr>
+                                                        <td class="px-4">
+                                                            <?php if($isLeave): ?>
+                                                                <span class="badge bg-info-subtle text-info rounded-pill px-3">ลา (<?= $row['leave_type'] ?>)</span>
+                                                            <?php else: ?>
+                                                                <span class="badge bg-primary-subtle text-primary rounded-pill px-3">เข้างาน</span>
+                                                            <?php endif; ?>
+                                                        </td>
+                                                        <td>
+                                                            <div class="fw-bold text-dark"><?= htmlspecialchars($isLeave ? $row['leave_date'] : $row['attendance_date']) ?></div>
+                                                            <?php if(!$isLeave): ?>
+                                                                <div class="small text-muted"><?= htmlspecialchars(date('H:i', strtotime($row['attendance_time']))) ?> น.</div>
+                                                            <?php endif; ?>
+                                                        </td>
+                                                        <td>
+                                                            <?= (!$isLeave && $row['departure_time']) ? htmlspecialchars(date('H:i', strtotime($row['departure_time']))) . ' น.' : '-' ?>
+                                                        </td>
+                                                        <td class="px-4">
+                                                            <?php if($isLeave): ?>
+                                                                <div class="small text-dark fw-bold"><?= htmlspecialchars($row['reason'] ?? '-') ?></div>
+                                                                <div class="small text-muted italic">(<?= htmlspecialchars($row['status']) ?>)</div>
+                                                            <?php else: ?>
+                                                                <?php if ($row['status'] == 'on_time'): ?>
+                                                                    <span class="badge bg-success-subtle text-success rounded-pill px-3">ปกติ</span>
+                                                                <?php else: ?>
+                                                                    <span class="badge bg-warning-subtle text-warning rounded-pill px-3">สาย</span>
+                                                                <?php endif; ?>
+                                                            <?php endif; ?>
+                                                        </td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            <?php else: ?>
+                                                <tr><td colspan="4" class="text-center py-5 text-muted">ไม่พบข้อมูลการทำงานในระบบ</td></tr>
+                                            <?php endif; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
 
-                    <!-- Pagination -->
-                    <nav aria-label="Page navigation example">
-                        <ul class="pagination justify-content-end">
-                            <li class="page-item <?= $currentPage == 1 ? 'disabled' : '' ?>">
-                                <a class="page-link" href="?page=<?= $currentPage - 1 ?>&searchDate=<?= $searchDate ?>&leave_type=<?= $leaveType ?>">Previous</a>
-                            </li>
-                            <?php for ($page = 1; $page <= $totalPages; $page++) : ?>
-                                <li class="page-item <?= $page == $currentPage ? 'active' : '' ?>">
-                                    <a class="page-link" href="?page=<?= $page ?>&searchDate=<?= $searchDate ?>&leave_type=<?= $leaveType ?>"><?= $page ?></a>
-                                </li>
-                            <?php endfor; ?>
-                            <li class="page-item <?= $currentPage == $totalPages ? 'disabled' : '' ?>">
-                                <a class="page-link" href="?page=<?= $currentPage + 1 ?>&searchDate=<?= $searchDate ?>&leave_type=<?= $leaveType ?>">Next</a>
-                            </li>
-                        </ul>
-                    </nav>
+                        <?php if ($totalPages > 1): ?>
+                            <nav class="mt-4">
+                                <ul class="pagination justify-content-center">
+                                    <?php for ($p = 1; $p <= $totalPages; $p++): ?>
+                                        <li class="page-item <?= $p == $currentPage ? 'active' : '' ?>">
+                                            <a class="page-link border-0 shadow-sm mx-1 rounded-circle" href="?page=<?= $p ?>&searchDate=<?= urlencode($searchDate) ?>&leave_type=<?= urlencode($leaveType) ?>"><?= $p ?></a>
+                                        </li>
+                                    <?php endfor; ?>
+                                </ul>
+                            </nav>
+                        <?php endif; ?>
+                    </div>
                 </div>
-            </div>
-        </div>
-    </div>
-</body>
+<?php
+$content = ob_get_clean();
 
-</html>
+ob_start();
+?>
+<?php
+$scripts = ob_get_clean();
+
+require_once '../layouts/core/app.php';
+renderLayout('ประวัติการทำงาน', $content, $scripts);
+?>

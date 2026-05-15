@@ -3,60 +3,41 @@
         <thead class="table-dark">
             <tr>
                 <th scope="col">#</th>
-                <th scope="col">ชื่อ</th>
-                <th scope="col">เวลาเข้า</th>
+                <th scope="col">วันที่/เวลา</th>
                 <th scope="col">เวลาออก</th>
-                <th scope="col">ประเภทการลา</th>
-                <th scope="col">วันที่ลา</th>
-                <th scope="col">เหตุผล</th>
+                <th scope="col">สถานะ/เหตุผล</th>
             </tr>
         </thead>
         <tbody>
             <?php
-            // Example employee ID
+            // Note: $db and $userData are expected to be defined by the parent file (index.php)
             $employee_id = $userData['id'];
-
-            // Create an instance of DetailWork class
-            $detailWork = new DetailWork();
-
-            // Get the employee information
+            $detailWork = new DetailWork($db);
             $info = $detailWork->readInfo($employee_id);
 
-            // Check if data was retrieved
             if ($info) {
                 $index = 1;
-
-                // Display attendance data first
                 foreach ($info['attendance'] as $row) {
-                    $attendance_time = isset($row['created_at']) ? $row['created_at'] : 'ไม่มีข้อมูลการเข้าทำงาน';
-                    $departure_time = isset($row['departure_time']) ? $row['departure_time'] : 'ไม่มีข้อมูลการออกงาน';
+                    $status_badge = ($row['status'] == 'on_time') ? '<span class="badge bg-success">ปกติ</span>' : '<span class="badge bg-warning">สาย</span>';
                     echo "<tr>
-                            <th scope='row'>{$index}</th>
-                            <td>{$row['title']}{$row['firstname']} {$row['surname']}</td>
-                            <td>{$attendance_time}</td>
-                            <td>{$departure_time}</td>
-                            <td>-</td> <!-- No leave data for this row -->
-                            <td>-</td> <!-- No leave date for this row -->
-                            <td>-</td> <!-- No reason for this row -->
+                            <td>{$index}</td>
+                            <td>" . htmlspecialchars($row['created_at']) . "</td>
+                            <td>" . htmlspecialchars($row['departure_time'] ?? '-') . "</td>
+                            <td>{$status_badge}</td>
                           </tr>";
                     $index++;
                 }
-
-                // Display leave data
-                foreach ($info['leave'] as $leaveRow) {
+                foreach ($info['leave'] as $row) {
                     echo "<tr>
-                            <th scope='row'>{$index}</th>
-                            <td>{$leaveRow['title']} {$leaveRow['firstname']} {$leaveRow['surname']}</td>
-                            <td>-</td> <!-- No attendance data for this row -->
-                            <td>-</td> <!-- No departure time for this row -->
-                            <td>{$leaveRow['leave_type']}</td>
-                            <td>{$leaveRow['leave_date']}</td>
-                            <td>" . (empty($leaveRow['reason']) ? '-' : $leaveRow['reason']) . "</td> <!-- Use '-' if reason is empty -->
+                            <td>{$index}</td>
+                            <td>ลา ({$row['leave_type']}): {$row['leave_date']}</td>
+                            <td>-</td>
+                            <td>" . htmlspecialchars($row['reason'] ?? '-') . "</td>
                           </tr>";
                     $index++;
                 }
             } else {
-                echo "<tr><td colspan='7' class='text-center'>ไม่พบข้อมูล</td></tr>";
+                echo "<tr><td colspan='4' class='text-center'>ไม่พบข้อมูลการทำงาน</td></tr>";
             }
             ?>
         </tbody>

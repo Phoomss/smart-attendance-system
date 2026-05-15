@@ -1,199 +1,106 @@
 <?php
 session_start();
-require_once '../../server/LineLogin.php';
 require_once '../../server/conn.php';
+require_once '../../server/user.php';
+
+$database = new Conn();
+$db = $database->getConnection();
 
 if (!isset($_SESSION['profile']) && !isset($_SESSION['userInfo'])) {
-    die("Session data is missing.");
+    header('Location: ../../index.php');
+    exit();
 }
 
-$profile = isset($_SESSION['profile']) ? $_SESSION['profile'] : null;
-$userInfo = isset($_SESSION['userInfo']) ? $_SESSION['userInfo'] : null;
-
-// Determine which email to use
-if ($profile && isset($profile->email)) {
-    $user_sesstion = $profile->email; // Use email from profile object
-} else {
-    $user_sesstion = $userInfo['email']; // Use email from userInfo array
-}
-
-// Check if user_sesstion contains an email
-if (!$user_sesstion) {
-    die("No email found in session data.");
-}
-
-// Fetch user data from database using email
-$stmt = $conn->prepare("SELECT id, title, firstname, surname, name, username, phone, email, picture, role FROM users WHERE email = :email");
-$stmt->bindParam(':email', $user_sesstion);
-$stmt->execute();
+$userEmail = ($_SESSION['profile']->email ?? '') ?: ($_SESSION['userInfo']['email'] ?? '');
+$stmt = $db->prepare("SELECT * FROM users WHERE email = :email LIMIT 1");
+$stmt->execute([':email' => $userEmail]);
 $userData = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$userData) {
-    die("User not found.");
-}
+if (!$userData) die("User not found.");
+ob_start();
 ?>
+                <div class="mb-4">
+                    <h1 class="h3 fw-bold text-dark">ข้อมูลส่วนตัว</h1>
+                    <p class="text-muted small">จัดการข้อมูลส่วนตัวและรหัสผ่านของคุณ</p>
+                </div>
 
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Profile</title>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-KyZXEAg3QhqLMpG8r+Knujsl5+5hb7ieT9m+Q4j82j8=" crossorigin="anonymous"></script>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-    <link rel="stylesheet" href="style.css">
-    <?php require_once '../../script/script.js' ?>
-</head>
-
-<body>
-    <?php require_once 'navbar.php'; ?>
-
-    <main class="container mt-5">
-        <div class="row justify-content-center">
-            <!-- User Profile Section -->
-            <div class="col-lg-4 col-md-6 mb-4">
-                <div class="card shadow profile-card text-center">
-                    <?php
-                    // ตรวจสอบว่ามีข้อมูลใน $userData หรือไม่
-                    $defaultImage = "user2.png";
-                    $profilePicture = isset($userData['picture']) && !empty($userData['picture']) ? htmlspecialchars($userData['picture']) : $defaultImage;
-
-                    // ตรวจสอบชื่อผู้ใช้
-                    $name = isset($userData['title'], $userData['firstname'], $userData['surname'])
-                        ? htmlspecialchars($userData['title'] . $userData['firstname'] . ' ' . $userData['surname'])
-                        : htmlspecialchars($userData['name']);
-
-                    // ตรวจสอบอีเมล
-                    $email = isset($userData['email']) ? htmlspecialchars($userData['email']) : "ไม่มีอีเมล";
-
-                    // ตรวจสอบบทบาทผู้ใช้
-                    $role = isset($userData['role'])
-                        ? ($userData['role'] === 'employee' ? 'พนักงาน' : 'อื่นๆ')
-                        : 'ไม่ระบุบทบาท';
-                    ?>
-
-                    <div class="card-body">
-                        <!-- แสดงภาพ -->
-                        <img src="<?php echo $profilePicture; ?>" class="rounded-circle mb-3" alt="Profile Picture" style="width: 120px; height: 120px;">
-
-                        <!-- แสดงชื่อ -->
-                        <h5 class="card-title text-primary"><?php echo $name; ?></h5>
-
-                        <!-- แสดงอีเมล -->
-                        <p class="card-text text-muted">
-                            <i class="bi bi-envelope"></i> <?php echo $email; ?>
-                        </p>
-
-                        <!-- แสดงบทบาท -->
-                        <p class="card-text text-muted">
-                            <i class="bi bi-people"></i> <?php echo $role; ?>
-                        </p>
+                <div class="row g-4">
+                    <div class="col-lg-4">
+                        <div class="card border-0 shadow-sm text-center p-4">
+                            <div class="card-body">
+                                <img src="<?= !empty($userData['picture']) ? $userData['picture'] : '../../public/assets/img/user2.png' ?>" 
+                                     class="rounded-circle mb-3 shadow-sm" 
+                                     style="width: 120px; height: 120px; object-fit: cover; border: 4px solid #fff;">
+                                <h5 class="fw-bold text-dark mb-1"><?= htmlspecialchars(($userData['title'] ?? '') . ($userData['firstname'] ?? '') . ' ' . ($userData['surname'] ?? '')) ?></h5>
+                                <p class="text-muted mb-3"><?= htmlspecialchars($userData['email'] ?? '') ?></p>
+                                <div class="d-flex justify-content-center gap-2">
+                                    <span class="badge bg-primary-subtle text-primary rounded-pill px-3">พนักงาน</span>
+                                    <span class="badge bg-secondary-subtle text-secondary rounded-pill px-3"><?= htmlspecialchars($userData['employee_code'] ?? '-') ?></span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                </div>
-            </div>
+                    <div class="col-lg-8">
+                        <div class="card border-0 shadow-sm p-4">
+                            <form id="profileForm">
+                                <input type="hidden" name="id" value="<?= htmlspecialchars($userData['id'] ?? ''); ?>">
+                                
+                                <div class="row g-3">
+                                    <div class="col-md-2">
+                                        <label class="form-label small fw-bold text-muted">คำนำหน้า</label>
+                                        <input type="text" name="title" class="form-control" value="<?= htmlspecialchars($userData['title'] ?? '') ?>" required>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <label class="form-label small fw-bold text-muted">ชื่อจริง</label>
+                                        <input type="text" name="firstname" class="form-control" value="<?= htmlspecialchars($userData['firstname'] ?? '') ?>" required>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <label class="form-label small fw-bold text-muted">นามสกุล</label>
+                                        <input type="text" name="surname" class="form-control" value="<?= htmlspecialchars($userData['surname'] ?? '') ?>" required>
+                                    </div>
 
-            <!-- Form Section -->
-            <div class="col-lg-6 col-md-8">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title mb-3">ข้อมูลส่วนตัว</h5>
-                        <form id="profileForm">
-                            <div class="mb-3">
-                                <input type="hidden" name="id" value="<?= htmlspecialchars($userData['id']); ?>">
-                                <label for="title" class="form-label">คำนำหน้า</label>
-                                <select class="form-select" id="title" name="title" required>
-                                    <option value="นาย" <?php echo ($userData['title'] === 'นาย') ? 'selected' : ''; ?>>นาย</option>
-                                    <option value="นาง" <?php echo ($userData['title'] === 'นาง') ? 'selected' : ''; ?>>นาง</option>
-                                    <option value="นางสาว" <?php echo ($userData['title'] === 'นางสาว') ? 'selected' : ''; ?>>นางสาว</option>
-                                    <option value="Mr." <?php echo ($userData['title'] === 'Mr.') ? 'selected' : ''; ?>>Mr.</option>
-                                    <option value="Ms." <?php echo ($userData['title'] === 'Ms.') ? 'selected' : ''; ?>>Ms.</option>
-                                    <option value="Mrs." <?php echo ($userData['title'] === 'Mrs.') ? 'selected' : ''; ?>>Mrs.</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label for="firstname" class="form-label">ชื่อจริง</label>
-                                <input type="text" class="form-control" id="firstname" name="firstname" placeholder="ชื่อจริง" value="<?php echo htmlspecialchars($userData['firstname']) ?>" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="surname" class="form-label">นามสกุล</label>
-                                <input type="text" class="form-control" id="surname" name="surname" placeholder="นามสกุล" value="<?php echo htmlspecialchars($userData['surname']) ?>" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="username" class="form-label">ชื่อผู้ใช้งาน</label>
-                                <input type="text" class="form-control" id="username" name="username" placeholder="ชื่อผู้ใช้งาน" value="<?php echo htmlspecialchars($userData['username']) ?>" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="email" class="form-label">อีเมล</label>
-                                <input type="email" class="form-control" id="email" name="email" placeholder="อีเมล" value="<?php echo htmlspecialchars($userData['email']) ?>" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="phone" class="form-label">เบอร์โทร</label>
-                                <input type="text" class="form-control" id="phone" name="phone" placeholder="เบอร์โทร" value="<?php echo htmlspecialchars($userData['phone']) ?>" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="password" class="form-label">รหัสผ่าน</label>
-                                <input type="password" class="form-control" id="password" name="password" placeholder="กรุณากรอกรหัสผ่าน (ถ้ามี)">
-                            </div>
-                            <button type="submit" class="btn btn-primary w-100">บันทึกข้อมูล</button>
-                        </form>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold text-muted">เบอร์โทรศัพท์</label>
+                                        <input type="text" name="phone" class="form-control" value="<?= htmlspecialchars($userData['phone'] ?? '') ?>">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold text-muted">อีเมล</label>
+                                        <input type="email" name="email" class="form-control" value="<?= htmlspecialchars($userData['email'] ?? '') ?>" required>
+                                    </div>
+
+                                    <div class="col-md-12 mt-4 pt-3 border-top">
+                                        <h6 class="fw-bold text-dark mb-3">การเข้าสู่ระบบ</h6>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold text-muted">ชื่อผู้ใช้งาน</label>
+                                        <input type="text" name="username" class="form-control" value="<?= htmlspecialchars($userData['username'] ?? '') ?>" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold text-muted">รหัสผ่านใหม่ (เว้นว่างไว้ถ้าไม่ต้องการเปลี่ยน)</label>
+                                        <input type="password" name="password" class="form-control" placeholder="••••••••">
+                                    </div>
+                                </div>
+
+                                <div class="mt-5">
+                                    <button type="submit" class="btn btn-primary rounded-pill px-5">
+                                        <i class="fas fa-check-circle me-2"></i> บันทึกข้อมูล
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    </main>
-    <script>
-        jQuery(document).ready(function($) {
-            $('#profileForm').submit(function(e) {
-                e.preventDefault();
+                <?php
+                $content = ob_get_clean();
 
-                var formData = {
-                    action: 'update',
-                    id: $("input[name='id']").val(),
-                    title: $("#title").val(),
-                    firstname: $("#firstname").val(),
-                    surname: $("#surname").val(),
-                    username: $("#username").val(),
-                    phone: $("#phone").val(),
-                    email: $("#email").val(),
-                    password: $("#password").val() || null,
-                };
+                ob_start();
+                ?>
+                <script src="../../public/js/users.js"></script>
+                <?php
+                $scripts = ob_get_clean();
 
-                $.ajax({
-                    type: "POST",
-                    url: "../../api/userApi.php",
-                    data: formData,
-                    dataType: "json",
-                    success: function(response) {
-                        if (response.success) {
-                            Swal.fire({
-                                title: 'สำเร็จ!',
-                                text: response.message,
-                                icon: 'success',
-                            }).then(() => {
-                                window.location.reload(); // Reload page after success
-                            });
-                        } else {
-                            Swal.fire({
-                                title: 'ข้อผิดพลาด!',
-                                text: response.message,
-                                icon: 'error',
-                            });
-                        }
-                    },
-                    error: function() {
-                        Swal.fire({
-                            title: 'ข้อผิดพลาด!',
-                            text: 'ไม่สามารถส่งข้อมูลได้',
-                            icon: 'error',
-                        });
-                    }
-                });
-            });
-
-        });
-    </script>
-</body>
-
-</html>
+                require_once '../layouts/core/app.php';
+                renderLayout('โปรไฟล์ส่วนตัว', $content, $scripts);
+                ?>
