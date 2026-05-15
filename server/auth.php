@@ -23,25 +23,27 @@ class Auth
     {
         try {
             $query = "SELECT id, username, email, role, password FROM " . $this->table_name . "
-                      WHERE username = :identifier OR email = :identifier LIMIT 1";
+                      WHERE username = :identifier 
+                      OR email = :identifier 
+                      OR employee_code = :identifier 
+                      LIMIT 1";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':identifier', $identifier);
             $stmt->execute();
 
-            if ($stmt->rowCount() > 0) {
-                $user = $stmt->fetch(PDO::FETCH_ASSOC);
-                if (password_verify($password, $user['password'])) {
-                    return [
-                        'success' => true,
-                        'message' => 'เข้าสู่ระบบสำเร็จ',
-                        'data' => [
-                            'id' => $user['id'],
-                            'username' => $user['username'],
-                            'email' => $user['email'],
-                            'role' => $user['role']
-                        ]
-                    ];
-                }
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($user && password_verify($password, $user['password'])) {
+                return [
+                    'success' => true,
+                    'message' => 'เข้าสู่ระบบสำเร็จ',
+                    'data' => [
+                        'id' => $user['id'],
+                        'username' => $user['username'],
+                        'email' => $user['email'],
+                        'role' => $user['role']
+                    ]
+                ];
             }
             return ['success' => false, 'message' => 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง'];
         } catch (PDOException $e) {

@@ -25,14 +25,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         case 'update':
             $id = $_POST['id'] ?? 0;
-            $user->employee_code = $_POST['employee_code'] ?? '';
-            $user->title = $_POST['title'] ?? '';
-            $user->firstname = $_POST['firstname'] ?? '';
-            $user->surname = $_POST['surname'] ?? '';
-            $user->username = $_POST['username'] ?? '';
-            $user->phone = $_POST['phone'] ?? '';
-            $user->email = $_POST['email'] ?? '';
-            $user->password = $_POST['password'] ?? '';
+            $user->employee_code = trim($_POST['employee_code'] ?? '');
+            $user->title = trim($_POST['title'] ?? '');
+            $user->firstname = trim($_POST['firstname'] ?? '');
+            $user->surname = trim($_POST['surname'] ?? '');
+            $user->username = trim($_POST['username'] ?? '');
+            $user->phone = trim($_POST['phone'] ?? '');
+            $user->email = trim($_POST['email'] ?? '');
+            $user->password = $_POST['password'] ?? ''; // No trim on password
 
             if ($user->update($id)) {
                 echo json_encode(["success" => true, "message" => "อัปเดตข้อมูลสำเร็จ", "status_code" => 200]);

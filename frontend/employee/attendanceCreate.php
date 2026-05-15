@@ -32,7 +32,7 @@
             </div>
             <div class="modal-footer border-0 pt-0">
                 <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">ยกเลิก</button>
-                <button type="button" class="btn btn-primary rounded-pill px-4" id="saveAttendanceBtn">ยืนย6นบันทึก</button>
+                <button type="button" class="btn btn-primary rounded-pill px-4" id="saveAttendanceBtn">ยืนยืนบันทึก</button>
             </div>
         </div>
     </div>

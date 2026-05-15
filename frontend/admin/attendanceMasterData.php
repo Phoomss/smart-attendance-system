@@ -53,7 +53,7 @@ ob_start();
                                             <tr>
                                                 <td class="px-4"><?= $idx++ ?></td>
                                                 <td><span class="badge bg-primary-subtle text-primary rounded-pill px-3">เข้างาน</span></td>
-                                                <td><div class="fw-bold text-dark"><?= htmlspecialchars($row['attendance_date']) ?></div><div class="small text-muted"><?= htmlspecialchars(date('H:i', strtotime($row['attendance_time']))) ?> น.</div></td>
+                                                <td><div class="fw-bold text-dark"><?= htmlspecialchars($row['attendance_date']) ?></div><div class="small text-muted"><?= (!empty($row['attendance_time'])) ? htmlspecialchars(date('H:i', strtotime($row['attendance_time']))) : '--:--' ?> น.</div></td>
                                                 <td><?= $row['departure_time'] ? htmlspecialchars(date('H:i', strtotime($row['departure_time']))) . ' น.' : '<span class="text-muted small italic">ยังไม่บันทึก</span>' ?></td>
                                                 <td class="text-center px-4">
                                                     <?php if ($row['status'] == 'on_time'): ?>

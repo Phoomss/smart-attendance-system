@@ -2,6 +2,7 @@
 require_once '../server/conn.php';
 require_once '../server/auth.php';
 
+header('Content-Type: application/json');
 session_start();
 
 $database = new Conn();
@@ -11,15 +12,14 @@ $auth = new Auth($db);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $identifier = trim($_POST['identifier'] ?? '');
-    $password = trim($_POST['password'] ?? '');
+    $password = $_POST['password'] ?? ''; // Do not trim passwords
 
     if (!empty($identifier) && !empty($password)) {
         $user_data = $auth->login($identifier, $password);
 
         if ($user_data['success']) {
-            session_regenerate_id(true); // ป้องกัน Session Fixation
+            session_regenerate_id(true);
 
-            // เก็บเฉพาะข้อมูลสำคัญ
             $_SESSION['userInfo'] = [
                 'id' => $user_data['data']['id'],
                 'username' => $user_data['data']['username'],

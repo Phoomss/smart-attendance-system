@@ -28,11 +28,11 @@ ob_start();
                     <div class="col-lg-4">
                         <div class="card border-0 shadow-sm text-center p-4">
                             <div class="card-body">
-                                <img src="<?= !empty($userData['picture']) ? $userData['picture'] : 'user2.png' ?>" 
+                                <img src="<?= !empty($userData['picture']) ? $userData['picture'] : '../../public/assets/img/user2.png' ?>" 
                                      class="rounded-circle mb-3 shadow-sm" 
                                      style="width: 120px; height: 120px; object-fit: cover; border: 4px solid #fff;">
-                                <h5 class="fw-bold text-dark mb-1"><?= htmlspecialchars(($userData['title'] ?? '') . $userData['firstname'] . ' ' . $userData['surname']) ?></h5>
-                                <p class="text-muted mb-3"><?= htmlspecialchars($userData['email']) ?></p>
+                                <h5 class="fw-bold text-dark mb-1"><?= htmlspecialchars(($userData['title'] ?? '') . ($userData['firstname'] ?? '') . ' ' . ($userData['surname'] ?? '')) ?></h5>
+                                <p class="text-muted mb-3"><?= htmlspecialchars($userData['email'] ?? '') ?></p>
                                 <div class="d-flex justify-content-center gap-2">
                                     <span class="badge bg-primary-subtle text-primary rounded-pill px-3">พนักงาน</span>
                                     <span class="badge bg-secondary-subtle text-secondary rounded-pill px-3"><?= htmlspecialchars($userData['employee_code'] ?? '-') ?></span>
@@ -44,29 +44,29 @@ ob_start();
                     <div class="col-lg-8">
                         <div class="card border-0 shadow-sm p-4">
                             <form id="profileForm">
-                                <input type="hidden" name="id" value="<?= htmlspecialchars($userData['id']); ?>">
+                                <input type="hidden" name="id" value="<?= htmlspecialchars($userData['id'] ?? ''); ?>">
                                 
                                 <div class="row g-3">
                                     <div class="col-md-2">
                                         <label class="form-label small fw-bold text-muted">คำนำหน้า</label>
-                                        <input type="text" name="title" class="form-control" value="<?= htmlspecialchars($userData['title']) ?>" required>
+                                        <input type="text" name="title" class="form-control" value="<?= htmlspecialchars($userData['title'] ?? '') ?>" required>
                                     </div>
                                     <div class="col-md-5">
                                         <label class="form-label small fw-bold text-muted">ชื่อจริง</label>
-                                        <input type="text" name="firstname" class="form-control" value="<?= htmlspecialchars($userData['firstname']) ?>" required>
+                                        <input type="text" name="firstname" class="form-control" value="<?= htmlspecialchars($userData['firstname'] ?? '') ?>" required>
                                     </div>
                                     <div class="col-md-5">
                                         <label class="form-label small fw-bold text-muted">นามสกุล</label>
-                                        <input type="text" name="surname" class="form-control" value="<?= htmlspecialchars($userData['surname']) ?>" required>
+                                        <input type="text" name="surname" class="form-control" value="<?= htmlspecialchars($userData['surname'] ?? '') ?>" required>
                                     </div>
 
                                     <div class="col-md-6">
                                         <label class="form-label small fw-bold text-muted">เบอร์โทรศัพท์</label>
-                                        <input type="text" name="phone" class="form-control" value="<?= htmlspecialchars($userData['phone']) ?>">
+                                        <input type="text" name="phone" class="form-control" value="<?= htmlspecialchars($userData['phone'] ?? '') ?>">
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label small fw-bold text-muted">อีเมล</label>
-                                        <input type="email" name="email" class="form-control" value="<?= htmlspecialchars($userData['email']) ?>" required>
+                                        <input type="email" name="email" class="form-control" value="<?= htmlspecialchars($userData['email'] ?? '') ?>" required>
                                     </div>
 
                                     <div class="col-md-12 mt-4 pt-3 border-top">
@@ -75,7 +75,7 @@ ob_start();
 
                                     <div class="col-md-6">
                                         <label class="form-label small fw-bold text-muted">ชื่อผู้ใช้งาน</label>
-                                        <input type="text" name="username" class="form-control" value="<?= htmlspecialchars($userData['username']) ?>" required>
+                                        <input type="text" name="username" class="form-control" value="<?= htmlspecialchars($userData['username'] ?? '') ?>" required>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label small fw-bold text-muted">รหัสผ่านใหม่ (เว้นว่างไว้ถ้าไม่ต้องการเปลี่ยน)</label>

@@ -27,7 +27,7 @@ ob_start();
                     <div class="col-lg-4 mb-4">
                         <div class="card text-center p-4">
                             <div class="card-body">
-                                <img src="<?= !empty($userData['picture']) ? $userData['picture'] : 'user2.png' ?>" 
+                                <img src="<?= !empty($userData['picture']) ? $userData['picture'] : '../../public/assets/img/user2.png' ?>" 
                                      class="rounded-circle mb-3 shadow-sm" 
                                      style="width: 100px; height: 100px; object-fit: cover; border: 4px solid #fff;">
                                 <h5 class="fw-bold"><?= htmlspecialchars(($userData['title'] ?? '') . $userData['firstname'] . ' ' . $userData['surname']) ?></h5>

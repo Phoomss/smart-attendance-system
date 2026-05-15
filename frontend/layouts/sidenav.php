@@ -55,7 +55,7 @@ $role = $_SESSION['userInfo']['role'] ?? 'employee';
         <hr>
         <div class="dropdown mt-auto">
             <a href="#" class="d-flex align-items-center link-dark text-decoration-none dropdown-toggle" id="dropdownUser2" data-bs-toggle="dropdown" aria-expanded="false">
-                <img src="../../src/img/undraw_profile.svg" onerror="this.src='../../public/img/user2.png'; this.onerror=null;" alt="" width="32" height="32" class="rounded-circle me-2">
+                <img src="https://ui-avatars.com/api/?name=<?= urlencode($_SESSION['userInfo']['username'] ?? 'User') ?>&background=4F46E5&color=fff" alt="" width="32" height="32" class="rounded-circle me-2">
                 <strong><?= htmlspecialchars($_SESSION['userInfo']['username'] ?? 'User') ?></strong>
             </a>
             <ul class="dropdown-menu text-small shadow" aria-labelledby="dropdownUser2">

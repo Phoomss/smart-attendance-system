@@ -15,7 +15,7 @@ class DetailWork
     {
         try {
             // Fetch attendance data (Optimized with JOIN and explicit column selection)
-            $attendanceQuery = "SELECT a.attendance_date, a.created_at, a.departure_time, a.status
+            $attendanceQuery = "SELECT a.attendance_date, a.attendance_time, a.created_at, a.departure_time, a.status
                                  FROM " . $this->table_attendances . " a
                                  WHERE a.employee_id = :employee_id
                                  ORDER BY a.attendance_date DESC

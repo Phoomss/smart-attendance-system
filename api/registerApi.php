@@ -11,13 +11,15 @@ $auth = new Auth($db);
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $auth->employee_code = $_POST['employee_code'] ?? null;
-    $auth->title = $_POST['title'] ?? '';
-    $auth->firstname = $_POST['firstname'] ?? '';
-    $auth->surname = $_POST['surname'] ?? '';
-    $auth->username = $_POST['username'] ?? '';
-    $auth->email = $_POST['email'] ?? '';
-    $auth->password = $_POST['password'] ?? '';
+    $auth->employee_code = trim($_POST['employee_code'] ?? '');
+    if (empty($auth->employee_code)) $auth->employee_code = null;
+    
+    $auth->title = trim($_POST['title'] ?? '');
+    $auth->firstname = trim($_POST['firstname'] ?? '');
+    $auth->surname = trim($_POST['surname'] ?? '');
+    $auth->username = trim($_POST['username'] ?? '');
+    $auth->email = trim($_POST['email'] ?? '');
+    $auth->password = $_POST['password'] ?? ''; // Do not trim passwords
 
     $result = $auth->register();
     $statusCode = $result['success'] ? 200 : 400;
