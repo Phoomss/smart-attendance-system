@@ -95,7 +95,7 @@ class Auth
             return ["success" => false, "message" => "ไม่สามารถลงทะเบียนได้"];
         } catch (PDOException $e) {
             error_log("Registration error: " . $e->getMessage());
-            return ["success" => false, "message" => "เกิดข้อผิดพลาดในการลงทะเบียน"];
+            return ["success" => false, "message" => "เกิดข้อผิดพลาดในการลงทะเบียน: " . $e->getMessage()];
         }
     }
 }
