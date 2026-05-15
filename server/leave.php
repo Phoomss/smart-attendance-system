@@ -10,14 +10,15 @@ class Leave {
     public $leave_end_date;
     public $reason;
     public $status;
+    public $attachment_path;
 
     public function __construct($db) {
         $this->conn = $db;
     }
 
     public function create() {
-        $query = "INSERT INTO " . $this->table_name . " (employee_id, leave_type, leave_date, leave_end_date, reason, status) 
-                  VALUES (:employee_id, :leave_type, :leave_date, :leave_end_date, :reason, :status)";
+        $query = "INSERT INTO " . $this->table_name . " (employee_id, leave_type, leave_date, leave_end_date, reason, status, attachment_path) 
+                  VALUES (:employee_id, :leave_type, :leave_date, :leave_end_date, :reason, :status, :attachment_path)";
         
         $stmt = $this->conn->prepare($query);
 
@@ -29,6 +30,7 @@ class Leave {
         $stmt->bindParam(':leave_end_date', $this->leave_end_date, PDO::PARAM_STR);
         $stmt->bindParam(':reason', $this->reason, PDO::PARAM_STR);
         $stmt->bindParam(':status', $this->status, PDO::PARAM_STR);
+        $stmt->bindParam(':attachment_path', $this->attachment_path, PDO::PARAM_STR);
 
         try {
             return $stmt->execute();

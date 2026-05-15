@@ -34,6 +34,12 @@
                         <label class="form-label small fw-bold text-muted">เหตุผลการลา</label>
                         <textarea class="form-control" id="reason" rows="3" placeholder="ระบุเหตุผลที่ต้องการลา..." required></textarea>
                     </div>
+
+                    <div class="mb-0">
+                        <label class="form-label small fw-bold text-muted">ไฟล์แนบ (ถ้ามี)</label>
+                        <input type="file" class="form-control" id="attachment" accept="image/*,.pdf">
+                        <div class="form-text small">รองรับรูปภาพ หรือไฟล์ PDF</div>
+                    </div>
                 </form>
             </div>
             <div class="modal-footer border-0 pt-0">

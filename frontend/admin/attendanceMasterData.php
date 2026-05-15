@@ -54,7 +54,16 @@ ob_start();
                                                 <td class="px-4"><?= $idx++ ?></td>
                                                 <td><span class="badge bg-primary-subtle text-primary rounded-pill px-3">เข้างาน</span></td>
                                                 <td><div class="fw-bold text-dark"><?= htmlspecialchars($row['attendance_date']) ?></div><div class="small text-muted"><?= (!empty($row['attendance_time'])) ? htmlspecialchars(date('H:i', strtotime($row['attendance_time']))) : '--:--' ?> น.</div></td>
-                                                <td><?= $row['departure_time'] ? htmlspecialchars(date('H:i', strtotime($row['departure_time']))) . ' น.' : '<span class="text-muted small italic">ยังไม่บันทึก</span>' ?></td>
+                                                <td>
+                                                    <?= $row['departure_time'] ? htmlspecialchars(date('H:i', strtotime($row['departure_time']))) . ' น.' : '<span class="text-muted small italic">ยังไม่บันทึก</span>' ?>
+                                                    <?php if (!empty($row['latitude']) && !empty($row['longitude'])): ?>
+                                                        <div class="mt-1">
+                                                            <a href="https://www.google.com/maps?q=<?= $row['latitude'] ?>,<?= $row['longitude'] ?>" target="_blank" class="badge bg-light text-primary text-decoration-none border">
+                                                                <i class="fas fa-map-marker-alt me-1"></i> ดูพิกัด
+                                                            </a>
+                                                        </div>
+                                                    <?php endif; ?>
+                                                </td>
                                                 <td class="text-center px-4">
                                                     <?php if ($row['status'] == 'on_time'): ?>
                                                         <span class="badge bg-success-subtle text-success rounded-pill px-3">ปกติ</span>
@@ -69,7 +78,15 @@ ob_start();
                                                 <td class="px-4"><?= $idx++ ?></td>
                                                 <td><span class="badge bg-info-subtle text-info rounded-pill px-3">ลา (<?= $row['leave_type'] ?>)</span></td>
                                                 <td><div class="fw-bold text-dark"><?= htmlspecialchars($row['leave_date']) ?></div><div class="small text-muted">ถึง <?= htmlspecialchars($row['leave_end_date'] ?? $row['leave_date']) ?></div></td>
-                                                <td class="text-muted">-</td>
+                                                <td>
+                                                    <?php if (!empty($row['attachment_path'])): ?>
+                                                        <a href="../../public/uploads/leaves/<?= htmlspecialchars($row['attachment_path']) ?>" target="_blank" class="btn btn-sm btn-outline-info rounded-pill">
+                                                            <i class="fas fa-paperclip me-1"></i> ดูไฟล์แนบ
+                                                        </a>
+                                                    <?php else: ?>
+                                                        <span class="text-muted small">-</span>
+                                                    <?php endif; ?>
+                                                </td>
                                                 <td class="px-4">
                                                     <div class="small text-dark fw-bold"><?= htmlspecialchars($row['reason'] ?? '-') ?></div>
                                                     <div class="small text-muted italic">(<?= htmlspecialchars($row['status']) ?>)</div>

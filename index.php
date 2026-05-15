@@ -82,6 +82,19 @@ $lineLink = $line->getLink();
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        $(document).ready(function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('timeout')) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'หมดเวลาเชื่อมต่อ',
+                    text: 'กรุณาเข้าสู่ระบบใหม่อีกครั้งเพื่อความปลอดภัย',
+                    confirmButtonColor: '#4F46E5'
+                });
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        });
+        
         // Centralized API post helper for auth pages
         const apiPost = (url, data) => $.ajax({ type: "POST", url: url, data: data, dataType: "json" });
     </script>

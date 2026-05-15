@@ -1,4 +1,16 @@
 <?php
+// Session Timeout Security (30 Minutes)
+$timeout_duration = 1800;
+if (isset($_SESSION['LAST_ACTIVITY'])) {
+    if (time() - $_SESSION['LAST_ACTIVITY'] > $timeout_duration) {
+        session_unset();
+        session_destroy();
+        header("Location: ../../index.php?timeout=1");
+        exit();
+    }
+}
+$_SESSION['LAST_ACTIVITY'] = time();
+
 function renderLayout($title, $content, $scripts = '') {
     // Determine the base path for assets depending on the inclusion depth.
     $basePath = '../../';

@@ -15,7 +15,7 @@ class DetailWork
     {
         try {
             // Fetch attendance data (Optimized with JOIN and explicit column selection)
-            $attendanceQuery = "SELECT a.attendance_date, a.attendance_time, a.created_at, a.departure_time, a.status
+            $attendanceQuery = "SELECT a.attendance_date, a.attendance_time, a.created_at, a.departure_time, a.status, a.latitude, a.longitude
                                  FROM " . $this->table_attendances . " a
                                  WHERE a.employee_id = :employee_id
                                  ORDER BY a.attendance_date DESC
@@ -26,7 +26,7 @@ class DetailWork
             $attendanceResult = $attendanceStmt->fetchAll(PDO::FETCH_ASSOC);
 
             // Fetch leave data
-            $leaveQuery = "SELECT l.leave_type, l.leave_date, l.leave_end_date, l.reason, l.status
+            $leaveQuery = "SELECT l.leave_type, l.leave_date, l.leave_end_date, l.reason, l.status, l.attachment_path
                            FROM " . $this->table_leaves . " l
                            WHERE l.employee_id = :employee_id
                            ORDER BY l.leave_date DESC";
@@ -73,6 +73,77 @@ class DetailWork
         } catch (PDOException $e) {
             error_log("DetailWork getEmployeeStats Error: " . $e->getMessage());
             return false;
+        }
+    }
+
+    public function getEmployeeMonthlyStats($employee_id)
+    {
+        try {
+            $stats = [];
+            $month = date('m');
+            $year = date('Y');
+            
+            $q1 = "SELECT COUNT(*) FROM " . $this->table_attendances . " WHERE employee_id = :id AND MONTH(attendance_date) = :m AND YEAR(attendance_date) = :y";
+            $s1 = $this->conn->prepare($q1);
+            $s1->execute([':id' => $employee_id, ':m' => $month, ':y' => $year]);
+            $stats['total_days'] = $s1->fetchColumn();
+
+            $q2 = "SELECT COUNT(*) FROM " . $this->table_attendances . " WHERE employee_id = :id AND status = 'late' AND MONTH(attendance_date) = :m AND YEAR(attendance_date) = :y";
+            $s2 = $this->conn->prepare($q2);
+            $s2->execute([':id' => $employee_id, ':m' => $month, ':y' => $year]);
+            $stats['late_days'] = $s2->fetchColumn();
+
+            $q3 = "SELECT COUNT(*) FROM " . $this->table_leaves . " WHERE employee_id = :id AND status = 'approved' AND MONTH(leave_date) = :m AND YEAR(leave_date) = :y";
+            $s3 = $this->conn->prepare($q3);
+            $s3->execute([':id' => $employee_id, ':m' => $month, ':y' => $year]);
+            $stats['leave_days'] = $s3->fetchColumn();
+
+            return $stats;
+        } catch (PDOException $e) {
+            error_log("DetailWork getEmployeeMonthlyStats Error: " . $e->getMessage());
+            return ['total_days' => 0, 'late_days' => 0, 'leave_days' => 0];
+        }
+    }
+
+    public function getLeaveQuotas($employee_id)
+    {
+        try {
+            $year = date('Y');
+            
+            // 1. Get Limits (Default to 30/6 if table missing or record missing)
+            $qLimit = "SELECT sick_limit, personal_limit FROM leave_quotas WHERE employee_id = :id AND year = :year LIMIT 1";
+            $sLimit = $this->conn->prepare($qLimit);
+            $sLimit->execute([':id' => $employee_id, ':year' => $year]);
+            $limits = $sLimit->fetch(PDO::FETCH_ASSOC) ?: ['sick_limit' => 30, 'personal_limit' => 6];
+
+            // 2. Get Approved Counts for the year
+            $qUsed = "SELECT 
+                        COUNT(CASE WHEN leave_type = 'ลาป่วย' THEN 1 END) as sick_used,
+                        COUNT(CASE WHEN leave_type = 'ลากิจ' THEN 1 END) as personal_used
+                      FROM leaves 
+                      WHERE employee_id = :id AND status = 'approved' AND YEAR(leave_date) = :year";
+            $sUsed = $this->conn->prepare($qUsed);
+            $sUsed->execute([':id' => $employee_id, ':year' => $year]);
+            $used = $sUsed->fetch(PDO::FETCH_ASSOC);
+
+            return [
+                'sick' => [
+                    'limit' => $limits['sick_limit'],
+                    'used' => $used['sick_used'] ?? 0,
+                    'remaining' => $limits['sick_limit'] - ($used['sick_used'] ?? 0)
+                ],
+                'personal' => [
+                    'limit' => $limits['personal_limit'],
+                    'used' => $used['personal_used'] ?? 0,
+                    'remaining' => $limits['personal_limit'] - ($used['personal_used'] ?? 0)
+                ]
+            ];
+        } catch (PDOException $e) {
+            // Fallback for missing table
+            return [
+                'sick' => ['limit' => 30, 'used' => 0, 'remaining' => 30],
+                'personal' => ['limit' => 6, 'used' => 0, 'remaining' => 6]
+            ];
         }
     }
 

@@ -13,6 +13,8 @@ class Attendance
     public $attendance_time;
     public $departure_time;
     public $status;
+    public $latitude;
+    public $longitude;
 
     /**
      * Dependency Injection for Database Connection
@@ -43,8 +45,8 @@ class Attendance
         }
 
         $query = "INSERT INTO " . $this->table_name . " 
-                  (employee_id, attendance_date, attendance_time, status) 
-                  VALUES (:employee_id, :attendance_date, :attendance_time, :status)";
+                  (employee_id, attendance_date, attendance_time, status, latitude, longitude) 
+                  VALUES (:employee_id, :attendance_date, :attendance_time, :status, :latitude, :longitude)";
         
         $stmt = $this->conn->prepare($query);
 
@@ -52,6 +54,8 @@ class Attendance
         $stmt->bindParam(':attendance_date', $this->attendance_date, PDO::PARAM_STR);
         $stmt->bindParam(':attendance_time', $this->attendance_time, PDO::PARAM_STR);
         $stmt->bindParam(':status', $this->status, PDO::PARAM_STR);
+        $stmt->bindParam(':latitude', $this->latitude);
+        $stmt->bindParam(':longitude', $this->longitude);
 
         try {
             if ($stmt->execute()) {
@@ -63,7 +67,7 @@ class Attendance
             return ["success" => false, "message" => "ไม่สามารถบันทึกข้อมูลได้"];
         } catch (PDOException $e) {
             error_log("Attendance Create Error: " . $e->getMessage());
-            return ["success" => false, "message" => "เกิดข้อผิดพลาดในการบันทึกข้อมูล"];
+            return ["success" => false, "message" => "เกิดข้อผิดพลาดในการบันทึกข้อมูล: " . $e->getMessage()];
         }
     }
 
@@ -130,11 +134,15 @@ class Attendance
         }
 
         $query = "UPDATE " . $this->table_name . " 
-                  SET departure_time = :departure_time
+                  SET departure_time = :departure_time,
+                      latitude = IFNULL(latitude, :latitude),
+                      longitude = IFNULL(longitude, :longitude)
                   WHERE id = :id";
         
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':departure_time', $this->departure_time, PDO::PARAM_STR);
+        $stmt->bindParam(':latitude', $this->latitude);
+        $stmt->bindParam(':longitude', $this->longitude);
         $stmt->bindParam(':id', $this->id, PDO::PARAM_INT);
 
         return $stmt->execute();

@@ -26,6 +26,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $attendance->employee_id = $_POST['employee_id'];
             $attendance->attendance_date = $_POST['attendance_date'];
             $attendance->attendance_time = $_POST['attendance_date'] . ' ' . $_POST['attendance_time'];
+            $attendance->latitude = $_POST['latitude'] ?? null;
+            $attendance->longitude = $_POST['longitude'] ?? null;
 
             $result = $attendance->create();
             echo json_encode(array_merge($result, ["status_code" => $result['success'] ? 200 : 500]));
@@ -39,6 +41,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $attendance->id = $_POST['id'];
             $attendance->departure_time = date('Y-m-d') . ' ' . $_POST['departure_time'];
+            $attendance->latitude = $_POST['latitude'] ?? null;
+            $attendance->longitude = $_POST['longitude'] ?? null;
 
             if ($attendance->update()) {
                 echo json_encode(["success" => true, "message" => "บันทึกเวลาออกงานสำเร็จ", "status_code" => 200]);

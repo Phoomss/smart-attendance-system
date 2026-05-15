@@ -20,6 +20,10 @@ $userData = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$userData) die("User not found.");
 
+$detailWork = new DetailWork($db);
+$monthlyStats = $detailWork->getEmployeeMonthlyStats($userData['id']);
+$leaveQuotas = $detailWork->getLeaveQuotas($userData['id']);
+
 // Check for profile completeness
 $isProfileIncomplete = empty($userData['phone']) || empty($userData['employee_code']) || empty($userData['title']);
 
@@ -40,9 +44,9 @@ ob_start();
                 <?php endif; ?>
 
                 <div class="row">
-                    <!-- Profile Card -->
+                    <!-- Left Column: Profile & Stats -->
                     <div class="col-lg-4 mb-4">
-                        <div class="card text-center p-4">
+                        <div class="card text-center p-4 mb-4">
                             <div class="card-body">
                                 <img src="<?= !empty($userData['picture']) ? $userData['picture'] : '../../public/assets/img/user2.png' ?>" 
                                      class="rounded-circle mb-3 shadow-sm" 
@@ -51,6 +55,56 @@ ob_start();
                                 <p class="text-muted small mb-3"><?= htmlspecialchars($userEmail) ?></p>
                                 <span class="badge bg-primary-subtle text-primary rounded-pill px-3 mb-4">พนักงาน</span>
                                 <a href="profile.php" class="btn btn-outline-primary btn-sm w-100 rounded-pill">จัดการบัญชี</a>
+                            </div>
+                        </div>
+
+                        <!-- Leave Quotas -->
+                        <div class="card border-0 shadow-sm mb-4">
+                            <div class="card-header bg-white border-bottom pt-4 pb-3">
+                                <h6 class="fw-bold mb-0">สิทธิ์การลาคงเหลือ (ปี <?= date('Y') ?>)</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span class="small fw-bold text-muted">ลาป่วย</span>
+                                        <span class="small fw-bold"><?= $leaveQuotas['sick']['remaining'] ?> / <?= $leaveQuotas['sick']['limit'] ?> วัน</span>
+                                    </div>
+                                    <div class="progress" style="height: 6px;">
+                                        <div class="progress-bar bg-info" role="progressbar" style="width: <?= ($leaveQuotas['sick']['remaining'] / $leaveQuotas['sick']['limit']) * 100 ?>%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span class="small fw-bold text-muted">ลากิจ</span>
+                                        <span class="small fw-bold"><?= $leaveQuotas['personal']['remaining'] ?> / <?= $leaveQuotas['personal']['limit'] ?> วัน</span>
+                                    </div>
+                                    <div class="progress" style="height: 6px;">
+                                        <div class="progress-bar bg-warning" role="progressbar" style="width: <?= ($leaveQuotas['personal']['remaining'] / $leaveQuotas['personal']['limit']) * 100 ?>%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Monthly Stats -->
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header bg-white border-bottom pt-4 pb-3">
+                                <h6 class="fw-bold mb-0">สรุปการทำงานเดือนนี้ (<?= date('M') ?>)</h6>
+                            </div>
+                            <div class="card-body p-0">
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item d-flex justify-content-between align-items-center p-3 border-bottom-0">
+                                        <span class="text-muted small"><i class="fas fa-calendar-check text-primary me-2"></i> เข้างานทั้งหมด</span>
+                                        <span class="fw-bold"><?= $monthlyStats['total_days'] ?> วัน</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center p-3 border-bottom-0 bg-light">
+                                        <span class="text-muted small"><i class="fas fa-clock text-warning me-2"></i> มาสาย</span>
+                                        <span class="fw-bold <?= $monthlyStats['late_days'] > 0 ? 'text-warning' : '' ?>"><?= $monthlyStats['late_days'] ?> วัน</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center p-3">
+                                        <span class="text-muted small"><i class="fas fa-user-md text-danger me-2"></i> ลางาน (อนุมัติแล้ว)</span>
+                                        <span class="fw-bold <?= $monthlyStats['leave_days'] > 0 ? 'text-danger' : '' ?>"><?= $monthlyStats['leave_days'] ?> วัน</span>
+                                    </li>
+                                </ul>
                             </div>
                         </div>
                     </div>
@@ -78,7 +132,6 @@ ob_start();
 <?php if ($isProfileIncomplete): ?>
 <script>
     $(document).ready(function() {
-        // Only show SweetAlert if it hasn't been shown in this session
         if (!sessionStorage.getItem('profile_reminder_shown')) {
             Swal.fire({
                 title: 'โปรไฟล์ยังไม่สมบูรณ์',

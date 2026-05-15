@@ -12,9 +12,39 @@ $response = $userModel->getAllUser();
 $users = $response['success'] ? $response['data'] : [];
 ob_start();
 ?>
-                <div class="mb-4">
-                    <h1 class="h3 fw-bold text-dark">รายงานการเข้างาน</h1>
-                    <p class="text-muted small">ตรวจสอบข้อมูลการเข้า-ออกงาน และสถิติการลาของพนักงานรายบุคคล</p>
+                <div class="mb-4 d-flex justify-content-between align-items-end flex-wrap gap-3">
+                    <div>
+                        <h1 class="h3 fw-bold text-dark">รายงานการเข้างาน</h1>
+                        <p class="text-muted small mb-0">ตรวจสอบข้อมูลการเข้า-ออกงาน และสถิติการลาของพนักงานรายบุคคล</p>
+                    </div>
+                    
+                    <!-- Global Export Section -->
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-2 px-3 d-flex align-items-center gap-2">
+                            <span class="small fw-bold text-muted me-2"><i class="fas fa-file-export me-1"></i> ส่งออกข้อมูลรวม</span>
+                            <select id="exportMonth" class="form-select form-select-sm" style="width: auto;">
+                                <?php
+                                $months = ['01'=>'ม.ค.','02'=>'ก.พ.','03'=>'มี.ค.','04'=>'เม.ย.','05'=>'พ.ค.','06'=>'มิ.ย.','07'=>'ก.ค.','08'=>'ส.ค.','09'=>'ก.ย.','10'=>'ต.ค.','11'=>'พ.ย.','12'=>'ธ.ค.'];
+                                $currentMonth = date('m');
+                                foreach ($months as $m => $label) {
+                                    $selected = ($m === $currentMonth) ? 'selected' : '';
+                                    echo "<option value=\"$m\" $selected>$label</option>";
+                                }
+                                ?>
+                            </select>
+                            <select id="exportYear" class="form-select form-select-sm" style="width: auto;">
+                                <?php
+                                $currentYear = date('Y');
+                                for ($y = $currentYear; $y >= $currentYear - 2; $y--) {
+                                    echo "<option value=\"$y\">$y</option>";
+                                }
+                                ?>
+                            </select>
+                            <button onclick="exportCsv()" class="btn btn-success btn-sm fw-bold">
+                                <i class="fas fa-file-excel me-1"></i> ดาวน์โหลด CSV
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="row g-4">
@@ -68,6 +98,13 @@ ob_start();
         .transition-hover { transition: transform 0.2s, box-shadow 0.2s; }
         .transition-hover:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1) !important; }
     </style>
+    <script>
+        function exportCsv() {
+            const month = document.getElementById('exportMonth').value;
+            const year = document.getElementById('exportYear').value;
+            window.location.href = `../../server/exportCsv.php?month=${month}&year=${year}`;
+        }
+    </script>
 <?php
 $scripts = ob_get_clean();
 

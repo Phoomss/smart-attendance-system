@@ -21,6 +21,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $leave->leave_end_date = $_POST['leave_end_date'] ?? null;
             $leave->reason = $_POST['reason'] ?? '';
 
+            // Handle file upload
+            if (isset($_FILES['attachment']) && $_FILES['attachment']['error'] === UPLOAD_ERR_OK) {
+                $uploadDir = '../public/uploads/leaves/';
+                $fileExt = pathinfo($_FILES['attachment']['name'], PATHINFO_EXTENSION);
+                $newFileName = uniqid('leave_', true) . '.' . $fileExt;
+                $uploadFile = $uploadDir . $newFileName;
+
+                if (move_uploaded_file($_FILES['attachment']['tmp_name'], $uploadFile)) {
+                    $leave->attachment_path = $newFileName;
+                }
+            }
+
             if ($leave->create()) {
                 echo json_encode(["success" => true, "message" => "บันทึกการลาสำเร็จ", "status_code" => 200]);
             } else {
