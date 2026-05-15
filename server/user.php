@@ -78,32 +78,41 @@ class User
 
     public function update($id)
     {
-        $query = "UPDATE " . $this->table_name . " 
-                  SET employee_code = :employee_code, title = :title, firstname = :firstname, 
-                      surname = :surname, username = :username, phone = :phone, email = :email";
+        try {
+            $query = "UPDATE " . $this->table_name . " 
+                      SET employee_code = :employee_code, title = :title, firstname = :firstname, 
+                          surname = :surname, username = :username, phone = :phone, email = :email";
 
-        if (!empty($this->password)) {
-            $query .= ", password = :password";
+            if (!empty($this->password)) {
+                $query .= ", password = :password";
+            }
+
+            $query .= " WHERE id = :id";
+            $stmt = $this->conn->prepare($query);
+
+            // Handle potential nulls for unique fields
+            $empCode = !empty($this->employee_code) ? $this->employee_code : null;
+            $phone = !empty($this->phone) ? $this->phone : null;
+
+            $stmt->bindParam(':employee_code', $empCode);
+            $stmt->bindParam(':title', $this->title);
+            $stmt->bindParam(':firstname', $this->firstname);
+            $stmt->bindParam(':surname', $this->surname);
+            $stmt->bindParam(':username', $this->username);
+            $stmt->bindParam(':phone', $phone);
+            $stmt->bindParam(':email', $this->email);
+            $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+
+            if (!empty($this->password)) {
+                $hashedPassword = password_hash($this->password, PASSWORD_DEFAULT);
+                $stmt->bindParam(':password', $hashedPassword);
+            }
+
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            error_log("User Update Error: " . $e->getMessage());
+            return false;
         }
-
-        $query .= " WHERE id = :id";
-        $stmt = $this->conn->prepare($query);
-
-        $stmt->bindParam(':employee_code', $this->employee_code);
-        $stmt->bindParam(':title', $this->title);
-        $stmt->bindParam(':firstname', $this->firstname);
-        $stmt->bindParam(':surname', $this->surname);
-        $stmt->bindParam(':username', $this->username);
-        $stmt->bindParam(':phone', $this->phone);
-        $stmt->bindParam(':email', $this->email);
-        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-
-        if (!empty($this->password)) {
-            $hashedPassword = password_hash($this->password, PASSWORD_DEFAULT);
-            $stmt->bindParam(':password', $hashedPassword);
-        }
-
-        return $stmt->execute();
     }
 
     public function delete($id)

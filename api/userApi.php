@@ -34,6 +34,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $user->email = trim($_POST['email'] ?? '');
             $user->password = $_POST['password'] ?? ''; // No trim on password
 
+            // Convert empty strings to null for unique fields
+            if (empty($user->employee_code)) $user->employee_code = null;
+            if (empty($user->phone)) $user->phone = null;
+
             if ($user->update($id)) {
                 echo json_encode(["success" => true, "message" => "อัปเดตข้อมูลสำเร็จ", "status_code" => 200]);
             } else {

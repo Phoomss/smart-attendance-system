@@ -97,21 +97,7 @@ ob_start();
 
                 ob_start();
                 ?>
-                <script>
-                $('#profileForm').on('submit', function(e) {
-                e.preventDefault();
-                const formData = $(this).serialize() + '&action=update';
-
-                $.post("../../api/userApi.php", formData, (res) => {
-                if (res.success) {
-                    Swal.fire({ icon: 'success', title: 'สำเร็จ', text: res.message, timer: 1500 })
-                        .then(() => location.reload());
-                } else {
-                    Swal.fire({ icon: 'error', title: 'ผิดพลาด', text: res.message });
-                }
-                }, "json");
-                });
-                </script>
+                <script src="../../public/js/users.js"></script>
                 <?php
                 $scripts = ob_get_clean();
 

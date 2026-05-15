@@ -29,7 +29,7 @@ $(document).on('click', '.deleteBtn', function() {
     });
 });
 
-$('#editUserForm, #profileForm').on('submit', function(e) {
+$(document).on('submit', '#editUserForm, #profileForm', function(e) {
     e.preventDefault();
     const formData = $(this).serialize() + '&action=update';
     
