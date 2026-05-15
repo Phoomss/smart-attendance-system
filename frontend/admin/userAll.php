@@ -5,143 +5,79 @@ require_once '../../server/user.php';
 
 $database = new Conn();
 $db = $database->getConnection();
-
 $userModel = new User($db);
 $response = $userModel->getAllUser();
-
-if ($response['success']) {
-    $users = $response['data'];
-} else {
-    $users = [];
-    error_log($response['message']);
-}
+$users = ($response['success']) ? $response['data'] : [];
+ob_start();
 ?>
-
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบเข้าออกงาน</title>
-    <?php include_once '../layouts/config/libary.php'; ?>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-</head>
-
-<body id="page-top">
-    <div id="wrapper">
-        <?php include_once '../layouts/sidenav.php'; ?>
-
-        <div id="content-wrapper" class="d-flex flex-column">
-            <!-- Main Content -->
-            <div id="content">
-                <?php include_once '../layouts/navbar.php'; ?>
-
-                <!-- Begin Page Content -->
-                <div class="container-fluid">
-
-                    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-                        <h1 class="h3 mb-0 text-gray-800">ข้อมูลพนักงาน</h1>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h1 class="h3 fw-bold text-dark mb-0">จัดการพนักงาน</h1>
+                        <p class="text-muted small">รายชื่อและข้อมูลพื้นฐานของพนักงานทั้งหมดในระบบ</p>
                     </div>
+                </div>
 
-                    <div class="card shadow mb-4">
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-bordered table-striped" id="dataTable" width="100%" cellspacing="0">
-                                    <thead class="thead-dark">
-                                        <tr>
-                                            <th>#</th>
-                                            <th>รหัสพนักงาน</th>
-                                            <th>ชื่อ-นามสกุล</th>
-                                            <th>เบอร์โทร</th>
-                                            <th>อีเมล</th>
-                                            <th>ตำแหน่ง</th>
-                                            <th>จัดการ</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php if (!empty($users)) : ?>
-                                            <?php $count = 1; ?>
-                                            <?php foreach ($users as $user) : ?>
-                                                <tr>
-                                                    <td><?= $count++; ?></td>
-                                                    <td><?= htmlspecialchars($user['employee_code'] ?? '-'); ?></td>
-                                                    <td><?= htmlspecialchars(($user['title'] ?? '') . ($user['firstname'] ?? '') . ' ' . ($user['surname'] ?? '')); ?></td>
-                                                    <td><?= htmlspecialchars($user['phone'] ?? '-'); ?></td>
-                                                    <td><?= htmlspecialchars($user['email'] ?? '-'); ?></td>
-                                                    <td><?= htmlspecialchars($user['role'] ?? '-'); ?></td>
-                                                    <td>
-                                                        <a href="userEdit.php?id=<?= urlencode($user['id']) ?>" class="btn btn-warning btn-sm">แก้ไข</a>
-                                                        <button data-id="<?= $user['id']; ?>" class="btn btn-danger btn-sm deleteBtn">ลบ</button>
-                                                    </td>
-                                                </tr>
-                                            <?php endforeach; ?>
-                                        <?php else : ?>
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="bg-light text-muted small text-uppercase">
+                                    <tr>
+                                        <th class="px-4 py-3">พนักงาน</th>
+                                        <th class="py-3">รหัสพนักงาน</th>
+                                        <th class="py-3">ติดต่อ</th>
+                                        <th class="py-3">ตำแหน่ง</th>
+                                        <th class="px-4 py-3 text-end">จัดการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php if (!empty($users)) : ?>
+                                        <?php foreach ($users as $user) : ?>
                                             <tr>
-                                                <td colspan="7" class="text-center">ไม่มีข้อมูลพนักงาน</td>
+                                                <td class="px-4">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                                            <i class="fas fa-user"></i>
+                                                        </div>
+                                                        <div>
+                                                            <div class="fw-bold text-dark"><?= htmlspecialchars(($user['title'] ?? '') . $user['firstname'] . ' ' . $user['surname']) ?></div>
+                                                            <div class="text-muted small">@<?= htmlspecialchars($user['username']) ?></div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td><span class="badge bg-secondary-subtle text-secondary px-3"><?= htmlspecialchars($user['employee_code'] ?? '-') ?></span></td>
+                                                <td>
+                                                    <div class="small"><i class="fas fa-envelope me-1 text-muted"></i> <?= htmlspecialchars($user['email']) ?></div>
+                                                    <div class="small"><i class="fas fa-phone me-1 text-muted"></i> <?= htmlspecialchars($user['phone'] ?? '-') ?></div>
+                                                </td>
+                                                <td><span class="badge bg-info-subtle text-info"><?= htmlspecialchars($user['role'] ?? 'พนักงาน') ?></span></td>
+                                                <td class="px-4 text-end">
+                                                    <a href="userEdit.php?id=<?= urlencode($user['id']) ?>" class="btn btn-light btn-sm rounded-pill px-3 me-1">
+                                                        <i class="fas fa-edit me-1"></i> แก้ไข
+                                                    </a>
+                                                    <button data-id="<?= $user['id']; ?>" class="btn btn-light text-danger btn-sm rounded-pill px-3 deleteBtn">
+                                                        <i class="fas fa-trash-alt me-1"></i> ลบ
+                                                    </button>
+                                                </td>
                                             </tr>
-                                        <?php endif; ?>
-                                    </tbody>
-                                </table>
-                            </div>
+                                        <?php endforeach; ?>
+                                    <?php else : ?>
+                                        <tr><td colspan="5" class="text-center py-5 text-muted">ไม่มีข้อมูลพนักงานในระบบ</td></tr>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-
                 </div>
-                <!-- /.container-fluid -->
-            </div>
-            <!-- End of Main Content -->
+<?php
+$content = ob_get_clean();
 
-            <?php include_once '../layouts/footer.php'; ?>
-        </div>
-    </div>
+ob_start();
+?>
+    <script src="../../public/js/users.js"></script>
+<?php
+$scripts = ob_get_clean();
 
-    <?php include_once '../layouts/config/script.php'; ?>
-</body>
-
-
-<script>
-    $(document).ready(function() {
-        $('.deleteBtn').click(function() {
-            const id = $(this).data('id');
-            Swal.fire({
-                title: 'คุณแน่ใจหรือไม่?',
-                text: "ข้อมูลนี้จะไม่สามารถกู้คืนได้!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'ใช่, ลบเลย!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    $.ajax({
-                        type: "POST",
-                        url: "../../api/userApi.php",
-                        data: {
-                            action: 'delete',
-                            id: id
-                        },
-                        dataType: "json",
-                        success: function(response) {
-                            if (response.success) {
-                                Swal.fire(
-                                    'ลบแล้ว!',
-                                    response.message,
-                                    'success'
-                                ).then(() => location.reload());
-                            } else {
-                                Swal.fire('ผิดพลาด', response.message, 'error');
-                            }
-                        },
-                        error: function() {
-                            Swal.fire('ผิดพลาด', 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้', 'error');
-                        }
-                    });
-                }
-            });
-        });
-    });
-</script>
-
-</html>
+require_once '../layouts/core/app.php';
+renderLayout('จัดการพนักงาน', $content, $scripts);
+?>

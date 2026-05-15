@@ -3,184 +3,88 @@ session_start();
 require_once './server/LineLogin.php';
 
 $line = new LineLogin();
-$link = ''; // Initialize the $link variable in case there's an issue
-
-if (!isset($_SESSION['profile'])) {
-    // If session profile is not set, generate the Line login link
-    $link = $line->getLink();
-}
+$lineLink = $line->getLink();
 ?>
-
 <!DOCTYPE html>
 <html lang="th">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>เข้าสู่ระบบ</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>เข้าสู่ระบบ - Attendance System</title>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5.3 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="public/css/main.css" rel="stylesheet">
 </head>
-
-<style>
-    body {
-        background: linear-gradient(135deg, #4e73df, #1cc88a);
-        font-family: 'Arial', sans-serif;
-    }
-
-    .login-container {
-        background: white;
-        border-radius: 15px;
-        padding: 40px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    }
-
-    .login-container h2 {
-        font-weight: 700;
-        color: #333;
-        margin-bottom: 30px;
-    }
-
-    .login-container .form-control {
-        border-radius: 10px;
-        padding: 12px;
-        font-size: 14px;
-        border: 1px solid #ddd;
-    }
-
-    .btn-custom {
-        border-radius: 10px;
-        padding: 12px;
-        width: 100%;
-        font-size: 16px;
-        font-weight: bold;
-    }
-
-    .btn-line {
-        background-color: #4cc764;
-        color: white;
-        border: none;
-    }
-
-    .btn-line:hover {
-        background-color: #3cb055;
-    }
-
-    .btn-primary {
-        background-color: #0984e3;
-        border: none;
-    }
-
-    .btn-primary:hover {
-        background-color: #065bb0;
-    }
-
-    .img-container img {
-        max-width: 100%;
-        height: auto;
-    }
-
-    .form-text {
-        font-size: 14px;
-        color: #555;
-    }
-
-    @media (max-width: 768px) {
-        .login-container {
-            padding: 20px;
-        }
-
-        .btn-custom {
-            font-size: 14px;
-        }
-    }
-</style>
-
-<body>
-    <section class="vh-100 d-flex align-items-center">
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-md-6 col-lg-5">
-                    <div class="login-container">
-                        <h2 class="text-center">เข้าสู่ระบบ</h2>
-                        <form id="loginForm">
-                            <!-- Username or Email input -->
-                            <div class="input-group mb-3">
-                                <span class="input-group-text"><i class="fa-solid fa-user"></i></span>
-                                <input type="text" id="identifier" name="identifier" class="form-control" placeholder="อีเมล หรือ ชื่อผู้ใช้" aria-label="Email or Username" required>
+<body class="auth-page">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="card auth-card">
+                    <div class="row g-0">
+                        <!-- Left Side: Form -->
+                        <div class="col-md-6 p-5">
+                            <div class="mb-5">
+                                <h3 class="fw-bold text-dark">ยินดีต้อนรับ</h3>
+                                <p class="text-muted small">กรุณาเข้าสู่ระบบเพื่อใช้งานระบบเข้าออกงาน</p>
                             </div>
 
-                            <!-- Password input -->
-                            <div class="input-group mb-4">
-                                <span class="input-group-text"><i class="fa-solid fa-lock"></i></span>
-                                <input type="password" id="password" name="password" class="form-control" placeholder="รหัสผ่าน" aria-label="Password" required>
+                            <form id="loginForm">
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold text-muted">อีเมล หรือ ชื่อผู้ใช้งาน</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text text-muted"><i class="far fa-user"></i></span>
+                                        <input type="text" id="identifier" class="form-control" placeholder="example@email.com" required>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="form-label small fw-bold text-muted">รหัสผ่าน</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text text-muted"><i class="fas fa-lock"></i></span>
+                                        <input type="password" id="password" class="form-control" placeholder="••••••••" required>
+                                    </div>
+                                </div>
+
+                                <div class="d-grid gap-2 mb-4">
+                                    <button type="submit" class="btn btn-primary rounded-pill">เข้าสู่ระบบ</button>
+                                    <?php if (empty($_SESSION['profile'])): ?>
+                                        <a href="<?= $lineLink ?>" class="btn btn-line rounded-pill">
+                                            <i class="fa-brands fa-line me-2"></i> เข้าสู่ระบบด้วย LINE
+                                        </a>
+                                    <?php endif; ?>
+                                </div>
+
+                                <div class="text-center">
+                                    <p class="small text-muted">ยังไม่มีบัญชี? <a href="register.php" class="text-primary fw-bold text-decoration-none">สมัครสมาชิก</a></p>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Right Side: Illustration -->
+                        <div class="col-md-6 d-none d-md-flex illustration">
+                            <div class="text-center text-white">
+                                <img src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-login-form/draw2.svg" class="img-fluid mb-4" alt="Login">
+                                <h4 class="fw-bold">Smart Attendance</h4>
+                                <p class="small opacity-75">บันทึกเวลาเข้างานง่ายๆ สะดวกและรวดเร็ว</p>
                             </div>
-
-                            <div class="mb-4 text-center">
-                                <a href="register.php" class="form-text">ยังไม่มีบัญชี? สมัครก่อนเข้าใช้งาน</a>
-                            </div>
-
-                            <!-- Submit button -->
-                            <button type="submit" class="btn btn-primary btn-custom mb-3">เข้าสู่ระบบ</button>
-
-                            <?php
-                            if (empty($_SESSION['profile'])) {
-                                echo '<a href="' . $link . '" class="btn btn-line btn-custom">';
-                                echo '<i class="fa-brands fa-line me-2"></i> เข้าสู่ระบบด้วย Line';
-                                echo '</a>';
-                            }
-                            ?>
-                        </form>
+                        </div>
                     </div>
-                </div>
-
-                <!-- Image container for larger screens -->
-                <div class="col-md-6 d-none d-md-block img-container">
-                    <img src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-login-form/draw2.svg" alt="Login">
                 </div>
             </div>
         </div>
-    </section>
+    </div>
 
+    <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        $(document).ready(function() {
-            $("#loginForm").on('submit', function(e) {
-                e.preventDefault();
-                var identifier = $('#identifier').val();
-                var password = $('#password').val();
-                $.ajax({
-                    type: 'POST',
-                    url: './api/loginApi.php',
-                    data: {
-                        identifier: identifier,
-                        password: password
-                    },
-                    success: function(response) {
-                        try {
-                            const res = JSON.parse(response);
-                            if (res.status_code === 200) {
-                                if (res.role === 'admin') {
-                                    window.location.href = './frontend/admin/admin_dashboard.php';
-                                } else if (res.role === 'employee') {
-                                    window.location.href = './frontend/employee/index.php';
-                                } else {
-                                    window.location.reload();
-                                }
-                            } else {
-                                alert(res.message || 'เข้าสู่ระบบไม่สำเร็จ');
-                            }
-                        } catch (e) {
-                            alert('ข้อมูลที่ได้รับจากเซิร์ฟเวอร์ไม่ถูกต้อง');
-                        }
-                    },
-                    error: function() {
-                        alert('เกิดข้อผิดพลาด');
-                    }
-                });
-            });
-        });
+        // Centralized API post helper for auth pages
+        const apiPost = (url, data) => $.ajax({ type: "POST", url: url, data: data, dataType: "json" });
     </script>
+    <script src="public/js/auth.js"></script>
 </body>
-
 </html>

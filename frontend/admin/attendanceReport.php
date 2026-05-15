@@ -5,53 +5,72 @@ require_once '../../server/user.php';
 require_once '../../server/attendance.php';
 require_once '../../server/detailWork.php';
 
-// Initialize Database Connection once
 $database = new Conn();
 $db = $database->getConnection();
+$userModel = new User($db);
+$response = $userModel->getAllUser();
+$users = $response['success'] ? $response['data'] : [];
+ob_start();
 ?>
-
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบเข้าออกงาน</title>
-    <?php include_once '../layouts/config/libary.php' ?>
-</head>
-
-<body id="page-top">
-    <div id="wrapper">
-        <?php include_once '../layouts/sidenav.php' ?>
-
-        <div id="content-wrapper" class="d-flex flex-column">
-            <!-- Main Content -->
-            <div id="content">
-                <?php include_once '../layouts/navbar.php' ?>
-
-                <!-- Begin Page Content -->
-                <div class="container-fluid">
-
-                    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-                        <h1 class="h3 mb-0 text-gray-800">รายงานเข้าออกงาน</h1>
-                    </div>
-
-                    <?php 
-                    // The required file will use the initialized $db connection
-                    require_once 'attendanceDetail.php';
-                    ?>
+                <div class="mb-4">
+                    <h1 class="h3 fw-bold text-dark">รายงานการเข้างาน</h1>
+                    <p class="text-muted small">ตรวจสอบข้อมูลการเข้า-ออกงาน และสถิติการลาของพนักงานรายบุคคล</p>
                 </div>
-                <!-- /.container-fluid -->
 
-            </div>
-            <!-- End of Main Content -->
+                <div class="row g-4">
+                    <?php if (!empty($users)): ?>
+                        <?php foreach ($users as $user): ?>
+                            <div class="col-xl-4 col-md-6">
+                                <div class="card border-0 shadow-sm h-100 transition-hover">
+                                    <div class="card-body p-4">
+                                        <div class="d-flex align-items-center mb-4">
+                                            <div class="bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 56px; height: 56px;">
+                                                <i class="fas fa-user-circle fa-2x"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="fw-bold text-dark mb-1">
+                                                    <?= htmlspecialchars(($user['title'] ?? '') . $user['firstname'] . ' ' . $user['surname']) ?>
+                                                </h6>
+                                                <span class="badge bg-secondary-subtle text-secondary small fw-normal"><?= htmlspecialchars($user['employee_code'] ?? '-') ?></span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="space-y-2 mb-4">
+                                            <div class="d-flex justify-content-between small text-muted mb-2">
+                                                <span><i class="fas fa-envelope me-2"></i> อีเมล</span>
+                                                <span class="text-dark"><?= htmlspecialchars($user['email']) ?></span>
+                                            </div>
+                                            <div class="d-flex justify-content-between small text-muted">
+                                                <span><i class="fas fa-tag me-2"></i> ตำแหน่ง</span>
+                                                <span class="text-dark"><?= htmlspecialchars($user['role'] ?? 'พนักงาน') ?></span>
+                                            </div>
+                                        </div>
 
-            <?php include_once '../layouts/footer.php' ?>
-        </div>
-    </div>
+                                        <a href="attendanceMasterData.php?id=<?= urlencode($user['id']) ?>" class="btn btn-primary-subtle text-primary w-100 rounded-pill fw-bold">
+                                            <i class="fas fa-file-invoice me-2"></i> ดูประวัติการทำงาน
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <div class="col-12 text-center py-5">
+                            <div class="text-muted">ไม่พบข้อมูลพนักงาน</div>
+                        </div>
+                    <?php endif; ?>
+                </div>
+<?php
+$content = ob_get_clean();
 
+ob_start();
+?>
+    <style>
+        .transition-hover { transition: transform 0.2s, box-shadow 0.2s; }
+        .transition-hover:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1) !important; }
+    </style>
+<?php
+$scripts = ob_get_clean();
 
-    <?php include_once '../layouts/config/script.php' ?>
-</body>
-
-</html>
+require_once '../layouts/core/app.php';
+renderLayout('รายงานเข้าออกงาน', $content, $scripts);
+?>

@@ -1,80 +1,35 @@
 <!DOCTYPE html>
 <html lang="th">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>สมัครสมาชิก</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>สมัครสมาชิก - Attendance System</title>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5.3 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="public/css/main.css" rel="stylesheet">
 </head>
+<body class="auth-page">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <div class="card auth-card p-5">
+                    <div class="text-center mb-5">
+                        <h3 class="fw-bold text-dark">สร้างบัญชีผู้ใช้งาน</h3>
+                        <p class="text-muted small">กรอกข้อมูลด้านล่างเพื่อเข้าร่วมระบบ Attendance</p>
+                    </div>
 
-<style>
-    body {
-        background: linear-gradient(135deg, #4e73df, #1cc88a);
-        font-family: 'Arial', sans-serif;
-    }
-
-    .login-container {
-        background: #fff;
-        border-radius: 15px;
-        padding: 40px;
-        text-align: center;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    }
-
-    .login-container h3 {
-        font-weight: 700;
-        margin-bottom: 30px;
-        color: #2d3436;
-    }
-
-    .form-control {
-        border-radius: 10px;
-        font-size: 14px;
-    }
-
-    .btn-primary {
-        background-color: #6c5ce7;
-        border: none;
-        padding: 12px;
-        border-radius: 10px;
-    }
-
-    .btn-primary:hover {
-        background-color: #5a4acb;
-    }
-
-    .img-container img {
-        max-width: 100%;
-        height: auto;
-    }
-
-    @media (max-width: 768px) {
-        .login-container {
-            padding: 20px;
-        }
-    }
-</style>
-
-<body>
-    <section class="vh-100 d-flex align-items-center">
-        <div class="container">
-            <div class="row justify-content-center">
-                <!-- Illustration -->
-                <div class="col-md-6 d-none d-md-block img-container">
-                    <img src="https://mdbcdn.b-cdn.net/img/Photos/new-templates/bootstrap-login-form/draw2.svg" alt="Illustration">
-                </div>
-                <!-- Registration Form -->
-                <div class="col-md-6 col-lg-5">
-                    <div class="login-container">
-                        <form method="POST" id="registerForm">
-                            <h3 class="text-center">สมัครสมาชิก</h3>
-                            <div class="mb-3">
+                    <form id="registerForm">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label small fw-bold text-muted">คำนำหน้า</label>
                                 <div class="input-group">
-                                    <label class="input-group-text" for="inputGroupSelect01">คำนำหน้า</label>
-                                    <select class="form-select" id="title" name="title" required>
-                                        <option selected>เลือกคำนำหน้า</option>
+                                    <span class="input-group-text text-muted"><i class="fas fa-id-card"></i></span>
+                                    <select class="form-select" id="title" required>
+                                        <option value="" disabled selected>เลือกคำนำหน้า</option>
                                         <option value="นาย">นาย</option>
                                         <option value="นาง">นาง</option>
                                         <option value="นางสาว">นางสาว</option>
@@ -82,85 +37,69 @@
                                         <option value="Ms.">Ms.</option>
                                         <option value="Mrs.">Mrs.</option>
                                     </select>
+                                </div>
+                            </div>
 
-                                </div>
-                            </div>
-                            <div class="mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted">ชื่อจริง</label>
                                 <div class="input-group">
-                                    <span class="input-group-text"><i class="fa-regular fa-user"></i></span>
-                                    <input id="firstname" type="text" name="firstname" class="form-control" placeholder="ชื่อ" required>
+                                    <span class="input-group-text text-muted"><i class="far fa-user"></i></span>
+                                    <input type="text" id="firstname" class="form-control" placeholder="ชื่อจริง" required>
                                 </div>
                             </div>
-                            <div class="mb-3">
+
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted">นามสกุล</label>
                                 <div class="input-group">
-                                    <span class="input-group-text"><i class="fa-regular fa-user"></i></span>
-                                    <input id="surname" type="text" name="surname" class="form-control" placeholder="นามสกุล" required>
+                                    <span class="input-group-text text-muted"><i class="far fa-user"></i></span>
+                                    <input type="text" id="surname" class="form-control" placeholder="นามสกุล" required>
                                 </div>
                             </div>
-                            <div class="mb-3">
+
+                            <div class="col-12">
+                                <label class="form-label small fw-bold text-muted">ชื่อผู้ใช้งาน</label>
                                 <div class="input-group">
-                                    <span class="input-group-text"><i class="fa-solid fa-envelope"></i></span>
-                                    <input id="username" type="text" name="username" class="form-control" placeholder="ชื่อผู้ใช้งาน" required>
+                                    <span class="input-group-text text-muted"><i class="fas fa-at"></i></span>
+                                    <input type="text" id="username" class="form-control" placeholder="username" required>
                                 </div>
                             </div>
-                            <div class="mb-3">
+
+                            <div class="col-12">
+                                <label class="form-label small fw-bold text-muted">อีเมล</label>
                                 <div class="input-group">
-                                    <span class="input-group-text"><i class="fa-solid fa-envelope"></i></span>
-                                    <input id="email" type="email" name="email" class="form-control" placeholder="อีเมล" required>
+                                    <span class="input-group-text text-muted"><i class="far fa-envelope"></i></span>
+                                    <input type="email" id="email" class="form-control" placeholder="example@email.com" required>
                                 </div>
                             </div>
-                            <div class="mb-4">
+
+                            <div class="col-12 mb-3">
+                                <label class="form-label small fw-bold text-muted">รหัสผ่าน</label>
                                 <div class="input-group">
-                                    <span class="input-group-text"><i class="fa-solid fa-lock"></i></span>
-                                    <input id="password" type="password" name="password" class="form-control" placeholder="รหัสผ่าน" required>
+                                    <span class="input-group-text text-muted"><i class="fas fa-lock"></i></span>
+                                    <input type="password" id="password" class="form-control" placeholder="••••••••" required>
                                 </div>
                             </div>
-                            <button type="submit" class="btn btn-primary w-100">สมัครสมาชิก</button>
-                        </form>
-                    </div>
+                        </div>
+
+                        <div class="d-grid gap-2 mb-4">
+                            <button type="submit" class="btn btn-primary rounded-pill">สมัครสมาชิก</button>
+                        </div>
+
+                        <div class="text-center">
+                            <p class="small text-muted">มีบัญชีอยู่แล้ว? <a href="index.php" class="text-primary fw-bold text-decoration-none">เข้าสู่ระบบ</a></p>
+                        </div>
+                    </form>
                 </div>
-
             </div>
         </div>
-    </section>
+    </div>
 
+    <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        jQuery(document).ready(function($) {
-            $('#registerForm').submit(function(e) {
-                e.preventDefault();
-
-                var formData = {
-                    'title': $('#title').val(),
-                    'firstname': $('#firstname').val(),
-                    'surname': $('#surname').val(),
-                    'username': $('#username').val(),
-                    'email': $('#email').val(),
-                    'password': $('#password').val()
-                };
-
-                console.log(formData); // ตรวจสอบค่าที่จะส่งไป
-
-                $.ajax({
-                    type: 'POST',
-                    url: './api/registerApi.php',
-                    data: formData,
-                    dataType: 'json',
-                    encode: true
-                }).done(function(data) {
-                    console.log( "api log:",data); // ตรวจสอบค่าที่ได้รับจาก API
-                    if (data.success) {
-                        alert(data.message);
-                        window.location.href = 'index.php'; // Redirect
-                    } else {
-                        alert(data.message);
-                    }
-                }).fail(function(xhr, status, error) {
-                    alert("เกิดข้อผิดพลาดในการลงทะเบียน โปรดลองใหม่อีกครั้ง");
-                });
-            });
-        });
+        const apiPost = (url, data) => $.ajax({ type: "POST", url: url, data: data, dataType: "json" });
     </script>
+    <script src="public/js/auth.js"></script>
 </body>
-
 </html>

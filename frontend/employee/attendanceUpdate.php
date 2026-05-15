@@ -1,116 +1,48 @@
 <?php
-// Note: $db and $userData are expected to be defined by the parent file (index.php)
-$employee_id = $userData['id'];
-
+// Note: $db and $userData are from index.php
 $attendanceModel = new Attendance($db);
-$attendanceUpdate = $attendanceModel->readInfo($employee_id);
+$attendanceUpdate = $attendanceModel->readInfo($userData['id']);
 ?>
 
-<!-- ปุ่มบันทึกเวลาออกงาน -->
-<div class="col-md-6 mb-2" id="model">
-    <a role="button" class="btn btn-outline-danger w-100" type="button" data-bs-toggle="modal" data-bs-target="#departureModel" id="departureButton">บันทึกเวลาออกงาน</a>
+<!-- บันทึกเวลาออกงาน -->
+<div class="col-md-4">
+    <button class="btn btn-danger w-100 rounded-pill py-3 shadow-sm transition-hover" id="departureButton" data-bs-toggle="modal" data-bs-target="#departureModel">
+        <i class="fas fa-sign-out-alt me-2"></i> บันทึกเวลาออกงาน
+    </button>
 </div>
 
-<!-- Modal for Departure -->
-<div class="modal fade" id="departureModel" tabindex="-1" aria-labelledby="departureModelLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="departureModelLabel">บันทึกเวลาออกงาน</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<!-- Modal Clock-out -->
+<div class="modal fade" id="departureModel" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="fw-bold">บันทึกเวลาออกงาน</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body p-4">
                 <?php if ($attendanceUpdate): ?>
                 <form id="departureForm">
+                    <input type="hidden" id="attendance_id" value="<?= htmlspecialchars($attendanceUpdate['id']); ?>">
+                    <input type="hidden" id="employee_id_depart" value="<?= htmlspecialchars($userData['id']); ?>">
                     <div class="mb-3">
-                        <label class="form-label">ชื่อ-นามสกุล</label>
-                        <input type="hidden" id="attendance_id" value="<?php echo htmlentities($attendanceUpdate['id']); ?>">
-                        <input type="hidden" id="employee_id_depart" value="<?php echo htmlentities($userData['id']); ?>">
-                        <input type="text" class="form-control" value="<?php echo htmlentities(($userData['title'] ?? '') . ' ' . $userData['firstname'] . ' ' . $userData['surname']); ?>" readonly>
+                        <label class="form-label small fw-bold text-muted">เข้างานเมื่อ</label>
+                        <input type="text" class="form-control bg-light" value="<?= htmlspecialchars($attendanceUpdate['attendance_date'] . ' ' . date('H:i', strtotime($attendanceUpdate['attendance_time']))) ?>" readonly>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">วันที่</label>
-                        <input type="date" class="form-control" value="<?php echo htmlentities($attendanceUpdate['attendance_date']) ?>" disabled>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">เวลาเข้า</label>
-                        <input type="time" class="form-control" value="<?php echo htmlentities(date('H:i', strtotime($attendanceUpdate['attendance_time']))); ?>" disabled>
-                    </div>
-                    <div class="mb-3">
-                        <label for="departure_time" class="form-label">เวลาออก</label>
-                        <input type="time" class="form-control" id="departure_time" required>
+                        <label class="form-label small fw-bold text-muted">เวลาออก</label>
+                        <input type="time" class="form-control" id="departure_time" value="<?= date('H:i') ?>" required>
                     </div>
                 </form>
                 <?php else: ?>
-                    <div class="alert alert-warning">ไม่พบข้อมูลการเข้างานของวันนี้</div>
+                    <div class="alert alert-warning border-0 small">ไม่พบข้อมูลการเข้างานของวันนี้ คุณต้องบันทึกเวลาเข้างานก่อน</div>
                 <?php endif; ?>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">ปิด</button>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">ปิด</button>
                 <?php if ($attendanceUpdate): ?>
-                <button type="button" class="btn btn-primary" id="saveDepart_time">บันทึก</button>
+                <button type="button" class="btn btn-danger rounded-pill px-4" id="saveDepart_time">บันทึกเวลาออก</button>
                 <?php endif; ?>
             </div>
         </div>
     </div>
 </div>
-
-<script>
-    function checkTimeToShowButton() {
-        const currentTime = new Date();
-        const button = document.getElementById('departureButton');
-        if (button) {
-            // Show button after 12:00 PM
-            button.style.display = (currentTime.getHours() >= 12) ? 'block' : 'none';
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', checkTimeToShowButton);
-
-    $('#departureModel').on('shown.bs.modal', function() {
-        $.ajax({
-            type: "POST",
-            url: "../../api/attendanceApi.php",
-            data: {
-                action: 'checkDeparture',
-                employee_id: $('#employee_id_depart').val(),
-            },
-            dataType: "json",
-            success: function(response) {
-                if (response.exists) {
-                    $('#departure_time').prop('disabled', true);
-                    Swal.fire({ icon: 'info', title: 'แจ้งเตือน', text: 'คุณได้บันทึกเวลาออกงานแล้วในวันนี้' });
-                } else {
-                    $('#departure_time').prop('disabled', false);
-                }
-            }
-        });
-    });
-
-    $('#saveDepart_time').on('click', function(e) {
-        e.preventDefault();
-        const departure_time = $('#departure_time').val();
-        if (!departure_time) {
-            Swal.fire({ icon: 'warning', title: 'กรุณาระบุเวลาออกงาน' });
-            return;
-        }
-
-        $.ajax({
-            type: "POST",
-            url: "../../api/attendanceApi.php",
-            data: {
-                action: 'update',
-                id: $('#attendance_id').val(),
-                departure_time: departure_time
-            },
-            dataType: "json",
-            success: function(response) {
-                if (response.success) {
-                    Swal.fire({ icon: 'success', title: 'สำเร็จ', text: response.message }).then(() => location.reload());
-                } else {
-                    Swal.fire({ icon: 'error', title: 'ผิดพลาด', text: response.message });
-                }
-            }
-        });
-    });
-</script>

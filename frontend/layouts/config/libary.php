@@ -1,9 +1,16 @@
-<link href="../../src/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-<link
-    href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i"
-    rel="stylesheet">
+<?php
+// Unified Library configuration for Bootstrap 5.3 SaaS Theme
+?>
+<!-- Google Fonts: Inter -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-<!-- Custom styles for this page -->
-<link href="../../src/vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
-<!-- Custom styles for this template-->
-<link href="../../src/css/sb-admin-2.min.css" rel="stylesheet">
+<!-- Font Awesome -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+<!-- Bootstrap 5.3 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<!-- Modern SaaS Overrides -->
+<link href="/public/css/main.css" rel="stylesheet">

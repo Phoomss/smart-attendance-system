@@ -6,183 +6,96 @@ require_once '../../server/user.php';
 $database = new Conn();
 $db = $database->getConnection();
 
-$employee_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+$id = $_GET['id'] ?? 0;
+$userModel = new User($db);
+$response = $userModel->getUserInfo($id);
+$user = $response['success'] ? $response['data'] : null;
 
-if ($employee_id > 0) {
-    $userModel = new User($db);
-    $response = $userModel->getUserInfo($employee_id);
-
-    if ($response['success']) {
-        $userInfo = $response['data'];
-    } else {
-        $userInfo = [];
-        error_log($response['message']);
-    }
-} else {
+if (!$user) {
     header('Location: userAll.php');
     exit();
 }
+ob_start();
 ?>
+                <div class="mb-4">
+                    <h1 class="h3 fw-bold text-dark">แก้ไขข้อมูลพนักงาน</h1>
+                    <p class="text-muted small">อัปเดตข้อมูลส่วนตัวและสิทธิ์การใช้งานของพนักงาน</p>
+                </div>
 
-<!DOCTYPE html>
-<html lang="en">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="card border-0 shadow-sm p-4">
+                            <form id="editUserForm">
+                                <input type="hidden" name="id" value="<?= htmlspecialchars($user['id']) ?>">
+                                
+                                <div class="row g-3">
+                                    <div class="col-md-2">
+                                        <label class="form-label small fw-bold text-muted">คำนำหน้า</label>
+                                        <input type="text" name="title" class="form-control" value="<?= htmlspecialchars($user['title']) ?>" required>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <label class="form-label small fw-bold text-muted">ชื่อจริง</label>
+                                        <input type="text" name="firstname" class="form-control" value="<?= htmlspecialchars($user['firstname']) ?>" required>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <label class="form-label small fw-bold text-muted">นามสกุล</label>
+                                        <input type="text" name="surname" class="form-control" value="<?= htmlspecialchars($user['surname']) ?>" required>
+                                    </div>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>แก้ไขข้อมูลพนักงาน</title>
-    <?php include_once '../layouts/config/libary.php'; ?>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-</head>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold text-muted">รหัสพนักงาน</label>
+                                        <input type="text" name="employee_code" class="form-control bg-light" value="<?= htmlspecialchars($user['employee_code']) ?>" readonly>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold text-muted">ตำแหน่ง (Role)</label>
+                                        <select name="role" class="form-select" disabled>
+                                            <option value="employee" <?= $user['role'] == 'employee' ? 'selected' : '' ?>>Employee</option>
+                                            <option value="admin" <?= $user['role'] == 'admin' ? 'selected' : '' ?>>Admin</option>
+                                        </select>
+                                    </div>
 
-<body id="page-top">
-    <div id="wrapper">
-        <?php include_once '../layouts/sidenav.php'; ?>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold text-muted">เบอร์โทรศัพท์</label>
+                                        <input type="text" name="phone" class="form-control" value="<?= htmlspecialchars($user['phone']) ?>">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold text-muted">อีเมล</label>
+                                        <input type="email" name="email" class="form-control" value="<?= htmlspecialchars($user['email']) ?>" required>
+                                    </div>
 
-        <div id="content-wrapper" class="d-flex flex-column">
-            <div id="content">
-                <?php include_once '../layouts/navbar.php'; ?>
+                                    <div class="col-md-12 mt-4 pt-3 border-top">
+                                        <h6 class="fw-bold text-dark mb-3">Account Security</h6>
+                                    </div>
 
-                <div class="container mt-5">
-                    <div class="card shadow">
-                        <div class="card-header bg-primary text-white">
-                            <h5 class="m-0">แก้ไขข้อมูลพนักงาน: <?= htmlspecialchars($userInfo['firstname'] ?? ''); ?></h5>
-                        </div>
-                        <div class="card-body">
-                            <?php if (!empty($userInfo)): ?>
-                                <form id="userForm">
-                                    <input type="hidden" name="id" value="<?= htmlspecialchars($userInfo['id']); ?>">
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold text-muted">ชื่อผู้ใช้งาน (Username)</label>
+                                        <input type="text" name="username" class="form-control" value="<?= htmlspecialchars($user['username']) ?>" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold text-muted">รหัสผ่านใหม่ (เว้นว่างไว้หากไม่ต้องการเปลี่ยน)</label>
+                                        <input type="password" name="password" class="form-control" placeholder="••••••••">
+                                    </div>
+                                </div>
 
-                                    <fieldset class="border p-3 mb-3">
-                                        <legend class="w-auto px-2">ข้อมูลส่วนตัว</legend>
-                                        <div class="row">
-                                            <div class="col-md-3">
-                                                <div class="form-group">
-                                                    <label for="employee_code">รหัสพนักงาน</label>
-                                                    <input type="text" class="form-control" id="employee_code" name="employee_code" value="<?= htmlspecialchars($userInfo['employee_code'] ?? ''); ?>" required>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <div class="form-group">
-                                                    <label for="title">คำนำหน้า</label>
-                                                    <input type="text" class="form-control" id="title" name="title" value="<?= htmlspecialchars($userInfo['title'] ?? ''); ?>">
-                                                </div>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <div class="form-group">
-                                                    <label for="firstname">ชื่อ</label>
-                                                    <input type="text" class="form-control" id="firstname" name="firstname" value="<?= htmlspecialchars($userInfo['firstname'] ?? ''); ?>" required>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <div class="form-group">
-                                                    <label for="surname">นามสกุล</label>
-                                                    <input type="text" class="form-control" id="surname" name="surname" value="<?= htmlspecialchars($userInfo['surname'] ?? ''); ?>" required>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </fieldset>
-
-                                    <fieldset class="border p-3 mb-3">
-                                        <legend class="w-auto px-2">ข้อมูลติดต่อ & บัญชี</legend>
-                                        <div class="row">
-                                            <div class="col-md-4">
-                                                <div class="form-group">
-                                                    <label for="phone">เบอร์โทร</label>
-                                                    <input type="text" class="form-control" id="phone" name="phone" value="<?= htmlspecialchars($userInfo['phone'] ?? ''); ?>">
-                                                </div>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <div class="form-group">
-                                                    <label for="email">อีเมล</label>
-                                                    <input type="email" class="form-control" id="email" name="email" value="<?= htmlspecialchars($userInfo['email'] ?? ''); ?>" required>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <div class="form-group">
-                                                    <label for="username">ชื่อผู้ใช้งาน</label>
-                                                    <input type="text" class="form-control" id="username" name="username" value="<?= htmlspecialchars($userInfo['username'] ?? ''); ?>" required>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="row">
-                                            <div class="col-md-6">
-                                                <div class="form-group">
-                                                    <label for="password">รหัสผ่าน (เว้นว่างไว้หากไม่ต้องการเปลี่ยน)</label>
-                                                    <input type="password" class="form-control" id="password" name="password" placeholder="********">
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </fieldset>
-
-                                    <button type="submit" class="btn btn-success btn-block">บันทึกการเปลี่ยนแปลง</button>
-                                    <a href="userAll.php" class="btn btn-secondary btn-block">ยกเลิก</a>
-                                </form>
-                            <?php else: ?>
-                                <div class="alert alert-danger">ไม่พบข้อมูลพนักงาน</div>
-                            <?php endif; ?>
+                                <div class="mt-5 d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary rounded-pill px-4">
+                                        <i class="fas fa-save me-2"></i> บันทึกข้อมูล
+                                    </button>
+                                    <a href="userAll.php" class="btn btn-light rounded-pill px-4">ยกเลิก</a>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>
-            </div>
+<?php
+$content = ob_get_clean();
 
-            <?php include_once '../layouts/footer.php'; ?>
-        </div>
-    </div>
+ob_start();
+?>
+    <script src="../../public/js/users.js"></script>
+<?php
+$scripts = ob_get_clean();
 
-    <?php include_once '../layouts/config/script.php'; ?>
-
-<script>
-$(document).ready(function() {
-    $("#userForm").submit(function(e) {
-        e.preventDefault();
-
-        const formData = {
-            action: "update",
-            id: $("input[name='id']").val(),
-            employee_code: $("#employee_code").val(),
-            title: $("#title").val(),
-            firstname: $("#firstname").val(),
-            surname: $("#surname").val(),
-            username: $("#username").val(),
-            phone: $("#phone").val(),
-            email: $("#email").val(),
-            password: $("#password").val() || null,
-        };
-
-        $.ajax({
-            type: "POST",
-            url: "../../api/userApi.php",
-            data: formData,
-            dataType: "json",
-            success: function(response) {
-                if (response.success) {
-                    Swal.fire({
-                        title: 'สำเร็จ!',
-                        text: response.message,
-                        icon: 'success',
-                    }).then(() => {
-                        window.location.href = 'userAll.php';
-                    });
-                } else {
-                    Swal.fire({
-                        title: 'ข้อผิดพลาด!',
-                        text: response.message,
-                        icon: 'error',
-                    });
-                }
-            },
-            error: function() {
-                Swal.fire({
-                    title: 'ข้อผิดพลาด!',
-                    text: 'ไม่สามารถส่งข้อมูลได้',
-                    icon: 'error',
-                });
-            }
-        });
-    });
-});
-</script>
-</body>
-</html>
+require_once '../layouts/core/app.php';
+renderLayout('แก้ไขข้อมูลพนักงาน', $content, $scripts);
+?>
