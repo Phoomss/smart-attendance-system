@@ -1,27 +1,36 @@
 <?php
-// แบบปกติ
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "attendance_db";
+// Database connection configuration using environment variables
+$servername = getenv('DB_HOST') ?: "localhost";
+$username = getenv('DB_USER') ?: "root";
+$password = getenv('DB_PASSWORD') ?: "";
+$dbname = getenv('DB_NAME') ?: "attendance_db";
 
 try {
-    // สร้างการเชื่อมต่อ PDO แบบปกติ
     $conn = new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
-    // ตั้งค่าให้ PDO จัดการกับข้อผิดพลาด
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    // Force UTF-8
+    $conn->exec("set names utf8mb4");
 } catch (PDOException $e) {
-    die("Connection failed: " . $e->getMessage());
+    // In production, we should log this and show a generic message
+    error_log("Connection failed: " . $e->getMessage());
+    die("Database connection failed. Please check your configuration.");
 }
 
-// ฟังก์ชันสำหรับเชื่อมต่อฐานข้อมูล
 class Conn
 {
-    private $host = "localhost";
-    private $db_name = "attendance_db";
-    private $username = "root";
-    private $password = "";
+    private $host;
+    private $db_name;
+    private $username;
+    private $password;
     public $conn;
+
+    public function __construct()
+    {
+        $this->host = getenv('DB_HOST') ?: "localhost";
+        $this->db_name = getenv('DB_NAME') ?: "attendance_db";
+        $this->username = getenv('DB_USER') ?: "root";
+        $this->password = getenv('DB_PASSWORD') ?: "";
+    }
 
     public function getConnection()
     {
@@ -29,8 +38,9 @@ class Conn
         try {
             $this->conn = new PDO("mysql:host=" . $this->host . ";dbname=" . $this->db_name, $this->username, $this->password);
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $this->conn->exec("set names utf8mb4");
         } catch (PDOException $exception) {
-            echo "Connection error: " . $exception->getMessage();
+            error_log("Connection error: " . $exception->getMessage());
         }
         return $this->conn;
     }

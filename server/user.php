@@ -1,11 +1,11 @@
 <?php
-require_once 'conn.php';
-
 class User
 {
     private $conn;
     private $table_name = "users";
+
     public $id;
+    public $employee_code;
     public $title;
     public $firstname;
     public $surname;
@@ -14,25 +14,20 @@ class User
     public $email;
     public $password;
 
-    public function __construct()
+    public function __construct($db)
     {
-        $database = new Conn();
-        $db = $database->getConnection();
         $this->conn = $db;
     }
 
     public function create()
     {
-        // Correct SQL query
-        $query = "INSERT INTO " . $this->table_name . " (title, firstname, surname, username, phone, password) 
-                  VALUES (:title, :firstname, :surname, :username, :phone, :password)";
+        $query = "INSERT INTO " . $this->table_name . " (employee_code, title, firstname, surname, username, phone, password) 
+                  VALUES (:employee_code, :title, :firstname, :surname, :username, :phone, :password)";
 
         $stmt = $this->conn->prepare($query);
-
-        // Hash the password
         $hashedPassword = password_hash($this->password, PASSWORD_DEFAULT);
 
-        // Bind parameters
+        $stmt->bindParam(':employee_code', $this->employee_code);
         $stmt->bindParam(':title', $this->title);
         $stmt->bindParam(':firstname', $this->firstname);
         $stmt->bindParam(':surname', $this->surname);
@@ -41,48 +36,27 @@ class User
         $stmt->bindParam(':password', $hashedPassword);
 
         try {
-            if ($stmt->execute()) {
-                return [
-                    "success" => true,
-                    "message" => "การลงทะเบียนผู้ใช้สำเร็จ"
-                ];
-            }
-
-            // Log error and return failure
-            error_log("Register error: " . implode(" ", $stmt->errorInfo()));
-            return [
-                "success" => false,
-                "message" => "ไม่สามารถลงทะเบียนผู้ใช้ได้"
-            ];
+            return $stmt->execute();
         } catch (PDOException $e) {
-            error_log("Database error: " . $e->getMessage());
-            return [
-                "success" => false,
-                "message" => "เกิดข้อผิดพลาดในการบันทึกข้อมูล: " . $e->getMessage()
-            ];
+            error_log("User Create Error: " . $e->getMessage());
+            return false;
         }
     }
 
     public function getAllUser()
     {
-        $query = "SELECT * FROM " . $this->table_name . " WHERE role != 'admin'";
+        $query = "SELECT id, employee_code, title, firstname, surname, username, email, phone, role, created_at FROM " . $this->table_name . " WHERE role != 'admin'";
         $stmt = $this->conn->prepare($query);
 
         try {
             $stmt->execute();
-            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
             return [
                 "success" => true,
-                "data" => $result,
-                "message" => "ดึงข้อมูลผู้ใช้ทั้งหมดสำเร็จ"
+                "data" => $stmt->fetchAll(PDO::FETCH_ASSOC)
             ];
         } catch (PDOException $e) {
-            error_log("Database error: " . $e->getMessage());
-            return [
-                "success" => false,
-                "message" => "เกิดข้อผิดพลาดในการดึงข้อมูลผู้ใช้ทั้งหมด: " . $e->getMessage()
-            ];
+            error_log("User getAllUser Error: " . $e->getMessage());
+            return ["success" => false, "message" => "Database error"];
         }
     }
 
@@ -90,114 +64,38 @@ class User
     {
         $query = "SELECT * FROM " . $this->table_name . " WHERE id = :id LIMIT 1";
         $stmt = $this->conn->prepare($query);
-
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
 
         try {
             $stmt->execute();
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            if ($result) {
-                return [
-                    "success" => true,
-                    "data" => $result,
-                    "message" => "ดึงข้อมูลผู้ใช้สำเร็จ"
-                ];
-            } else {
-                return [
-                    "success" => false,
-                    "message" => "ไม่พบข้อมูลผู้ใช้ที่ระบุ"
-                ];
-            }
+            return $result ? ["success" => true, "data" => $result] : ["success" => false, "message" => "User not found"];
         } catch (PDOException $e) {
-            error_log("Database error: " . $e->getMessage());
-            return [
-                "success" => false,
-                "message" => "เกิดข้อผิดพลาดในการดึงข้อมูลผู้ใช้: " . $e->getMessage()
-            ];
+            error_log("User getUserInfo Error: " . $e->getMessage());
+            return ["success" => false, "message" => "Database error"];
         }
     }
-
-    // public function updateProfile($id)
-    // {
-    //     $query = "UPDATE " . $this->table_name . " 
-    //               SET title = :title, 
-    //                   firstname = :firstname, 
-    //                   surname = :surname, 
-    //                   username = :username, 
-    //                   phone = :phone
-    //                   email = :email";
-
-    //     if (!empty($this->password)) {
-    //         $query .= ", password = :password";
-    //     }
-
-    //     $query .= " WHERE id = :id";
-
-    //     $stmt = $this->conn->prepare($query);
-
-    //     $stmt->bindParam(':title', $this->title);
-    //     $stmt->bindParam(':firstname', $this->firstname);
-    //     $stmt->bindParam(':surname', $this->surname);
-    //     $stmt->bindParam(':username', $this->username);
-    //     $stmt->bindParam(':phone', $this->phone);
-    //     $stmt->bindParam(":email", $this->email);
-    //     $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-
-    //     if (!empty($this->password)) {
-    //         $hashedPassword = password_hash($this->password, PASSWORD_DEFAULT);
-    //         $stmt->bindParam(':password', $hashedPassword);
-    //     }
-
-    //     try {
-    //         if ($stmt->execute()) {
-    //             http_response_code(200);
-    //             return [
-    //                 "success" => true,
-    //                 "message" => "อัปเดตโปรไฟล์สำเร็จ"
-    //             ];
-    //         }
-
-    //         error_log("Update profile error: " . implode(" ", $stmt->errorInfo()));
-    //         return [
-    //             "success" => false,
-    //             "message" => "ไม่สามารถอัปเดตโปรไฟล์ได้"
-    //         ];
-    //     } catch (PDOException $e) {
-    //         error_log("Database error: " . $e->getMessage());
-    //         http_response_code(500);
-    //         return [
-    //             "success" => false,
-    //             "message" => "เกิดข้อผิดพลาดในการอัปเดตโปรไฟล์: " . $e->getMessage()
-    //         ];
-    //     }
-    // }
-
 
     public function update($id)
     {
         $query = "UPDATE " . $this->table_name . " 
-        SET title = :title, 
-            firstname = :firstname, 
-            surname = :surname, 
-            username = :username, 
-            phone = :phone,
-            email = :email";
+                  SET employee_code = :employee_code, title = :title, firstname = :firstname, 
+                      surname = :surname, username = :username, phone = :phone, email = :email";
 
         if (!empty($this->password)) {
             $query .= ", password = :password";
         }
 
         $query .= " WHERE id = :id";
-
         $stmt = $this->conn->prepare($query);
 
+        $stmt->bindParam(':employee_code', $this->employee_code);
         $stmt->bindParam(':title', $this->title);
         $stmt->bindParam(':firstname', $this->firstname);
         $stmt->bindParam(':surname', $this->surname);
         $stmt->bindParam(':username', $this->username);
         $stmt->bindParam(':phone', $this->phone);
-        $stmt->bindParam(":email", $this->email);
+        $stmt->bindParam(':email', $this->email);
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
 
         if (!empty($this->password)) {
@@ -205,56 +103,14 @@ class User
             $stmt->bindParam(':password', $hashedPassword);
         }
 
-        try {
-            if ($stmt->execute()) {
-                http_response_code(200);
-                return [
-                    "success" => true,
-                    "message" => "อัปเดตโปรไฟล์สำเร็จ"
-                ];
-            }
-
-            error_log("Update profile error: " . implode(" ", $stmt->errorInfo()));
-            return [
-                "success" => false,
-                "message" => "ไม่สามารถอัปเดตโปรไฟล์ได้"
-            ];
-        } catch (PDOException $e) {
-            error_log("Database error: " . $e->getMessage());
-            http_response_code(500);
-            return [
-                "success" => false,
-                "message" => "เกิดข้อผิดพลาดในการอัปเดตโปรไฟล์: " . $e->getMessage()
-            ];
-        }
+        return $stmt->execute();
     }
 
     public function delete($id)
     {
         $query = "DELETE FROM " . $this->table_name . " WHERE id = :id";
         $stmt = $this->conn->prepare($query);
-
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-
-        try {
-            if ($stmt->execute()) {
-                return [
-                    "success" => true,
-                    "message" => "ลบข้อมูลผู้ใช้สำเร็จ"
-                ];
-            } else {
-                error_log("Delete error: " . implode(" ", $stmt->errorInfo()));
-                return [
-                    "success" => false,
-                    "message" => "ไม่สามารถลบข้อมูลผู้ใช้ได้"
-                ];
-            }
-        } catch (PDOException $e) {
-            error_log("Database error: " . $e->getMessage());
-            return [
-                "success" => false,
-                "message" => "เกิดข้อผิดพลาด: " . $e->getMessage()
-            ];
-        }
+        return $stmt->execute();
     }
 }

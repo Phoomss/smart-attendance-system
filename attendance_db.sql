@@ -33,6 +33,7 @@ CREATE TABLE `attendances` (
   `attendance_date` date NOT NULL,
   `attendance_time` timestamp NOT NULL DEFAULT current_timestamp(),
   `departure_time` timestamp NULL DEFAULT NULL,
+  `status` enum('on_time','late','absent') DEFAULT 'on_time',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -47,7 +48,9 @@ CREATE TABLE `leaves` (
   `employee_id` int(11) NOT NULL,
   `leave_type` enum('ลาป่วย','ลากิจ') NOT NULL,
   `leave_date` date NOT NULL,
+  `leave_end_date` date DEFAULT NULL,
   `reason` text DEFAULT NULL,
+  `status` enum('pending','approved','rejected') DEFAULT 'pending',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -59,6 +62,7 @@ CREATE TABLE `leaves` (
 
 CREATE TABLE `users` (
   `id` int(11) NOT NULL,
+  `employee_code` varchar(50) DEFAULT NULL,
   `title` varchar(10) DEFAULT NULL,
   `firstname` varchar(100) DEFAULT NULL,
   `surname` varchar(100) DEFAULT NULL,
@@ -78,8 +82,8 @@ CREATE TABLE `users` (
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `title`, `firstname`, `surname`, `name`, `username`, `phone`, `email`, `password`, `role`, `picture`, `access_token`, `refresh_token`, `created_at`) VALUES
-(1, 'Mr.', 'Admin', 'System', NULL, 'admin', NULL, 'admin@admin.com', '$2y$10$LlGHDb589U6y9n0XjwvGBuzlRmdXjy3Sjv0c8le13UG8MK8Ct.JGi', 'admin', NULL, NULL, NULL, '2025-01-17 17:44:41');
+INSERT INTO `users` (`id`, `employee_code`, `title`, `firstname`, `surname`, `name`, `username`, `phone`, `email`, `password`, `role`, `picture`, `access_token`, `refresh_token`, `created_at`) VALUES
+(1, 'EMP001', 'Mr.', 'Admin', 'System', NULL, 'admin', NULL, 'admin@admin.com', '$2y$10$LlGHDb589U6y9n0XjwvGBuzlRmdXjy3Sjv0c8le13UG8MK8Ct.JGi', 'admin', NULL, NULL, NULL, '2025-01-17 17:44:41');
 
 --
 -- Indexes for dumped tables
@@ -103,10 +107,11 @@ ALTER TABLE `leaves`
 -- Indexes for table `users`
 --
 ALTER TABLE `users`
-  ADD PRIMARY KEY (`id`),
+  PRIMARY KEY (`id`),
   ADD UNIQUE KEY `username` (`username`),
   ADD UNIQUE KEY `phone` (`phone`),
-  ADD UNIQUE KEY `email` (`email`);
+  ADD UNIQUE KEY `email` (`email`),
+  ADD UNIQUE KEY `employee_code` (`employee_code`);
 
 --
 -- AUTO_INCREMENT for dumped tables

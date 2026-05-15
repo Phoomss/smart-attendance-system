@@ -4,109 +4,68 @@ require_once '../server/attendance.php';
 
 session_start();
 
+// Centralized Connection Management
 $database = new Conn();
 $db = $database->getConnection();
+
+// Pass connection via Dependency Injection
 $attendance = new Attendance($db);
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['action'])) {
-        $action = $_POST['action'];
+header('Content-Type: application/json');
 
-        if ($action === 'create') {
-            // ตรวจสอบข้อมูลจาก POST
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $action = $_POST['action'] ?? '';
+
+    switch ($action) {
+        case 'create':
             if (empty($_POST['employee_id']) || empty($_POST['attendance_date']) || empty($_POST['attendance_time'])) {
-                echo json_encode([
-                    "success" => false,
-                    "message" => "กรุณากรอกข้อมูลให้ครบถ้วน",
-                    "status_code" => 400,
-                ]);
+                echo json_encode(["success" => false, "message" => "กรุณากรอกข้อมูลให้ครบถ้วน", "status_code" => 400]);
                 exit();
             }
 
             $attendance->employee_id = $_POST['employee_id'];
             $attendance->attendance_date = $_POST['attendance_date'];
-            $attendance->attendance_time = $_POST['attendance_time'];
+            $attendance->attendance_time = $_POST['attendance_date'] . ' ' . $_POST['attendance_time'];
 
-            // สร้างเวลาที่ถูกต้อง
-            $formatted_attendance_time = $_POST['attendance_date'] . ' ' . $_POST['attendance_time'];
-            $attendance->attendance_time = $formatted_attendance_time;
+            $result = $attendance->create();
+            echo json_encode(array_merge($result, ["status_code" => $result['success'] ? 200 : 500]));
+            break;
 
-            // บันทึกข้อมูล
-            $stmt = $attendance->create();
-
-            // ตรวจสอบผลลัพธ์
-            if ($stmt) {
-                echo json_encode([
-                    "success" => true,
-                    "message" => "บันทึกข้อมูลสำเร็จ",
-                    "status_code" => 200,
-                ]);
-            } else {
-                echo json_encode([
-                    "success" => false,
-                    "message" => "บันทึกข้อมูลไม่สำเร็จ",
-                    "status_code" => 500,
-                ]);
+        case 'update':
+            if (empty($_POST['id']) || empty($_POST['departure_time'])) {
+                echo json_encode(["success" => false, "message" => "ข้อมูลไม่ครบถ้วน", "status_code" => 400]);
+                exit();
             }
-        } else if ($action === 'update') {
+
             $attendance->id = $_POST['id'];
-            $attendance->employee_id = $_POST['employee_id'];
+            $attendance->departure_time = date('Y-m-d') . ' ' . $_POST['departure_time'];
 
-            // Assuming departure_time comes in 'HH:MM' format, append the current date
-            $departure_time = $_POST['departure_time'];
-            $formatted_departure_time = date('Y-m-d') . ' ' . $departure_time;  // Format to 'YYYY-MM-DD HH:MM'
-
-            $attendance->departure_time = $formatted_departure_time;  // Pass the formatted time
-
-            // Update the attendance record
-            $stmt = $attendance->update();
-
-            if ($stmt) {
-                echo json_encode([
-                    "success" => true,
-                    "message" => "แก้ไขข้อมูลสำเร็จ",
-                    "status_code" => 200,
-                ]);
+            if ($attendance->update()) {
+                echo json_encode(["success" => true, "message" => "บันทึกเวลาออกงานสำเร็จ", "status_code" => 200]);
             } else {
-                echo json_encode([
-                    "success" => false,
-                    "message" => "แก้ไขข้อมูลไม่สำเร็จ",
-                    "status_code" => 500,
-                ]);
+                echo json_encode(["success" => false, "message" => "ไม่สามารถบันทึกข้อมูลได้", "status_code" => 500]);
             }
-        } else if ($action === 'delete') {
-            $attendance->id = $_POST['id'];
-            $stmt = $attendance->delete();
+            break;
 
-            if ($stmt) {
-                echo json_encode([
-                    "success" => true,
-                    "message" => "ลบข้อมูลสำเร็จ",
-                    "status_code" => 200,
-                ]);
+        case 'delete':
+            $attendance->id = $_POST['id'] ?? 0;
+            if ($attendance->delete()) {
+                echo json_encode(["success" => true, "message" => "ลบข้อมูลสำเร็จ", "status_code" => 200]);
             } else {
-                echo json_encode([
-                    "success" => false,
-                    "message" => "ลบข้อมูลไม่สำเร็จ",
-                    "status_code" => 500,
-                ]);
+                echo json_encode(["success" => false, "message" => "ไม่สามารถลบข้อมูลได้", "status_code" => 500]);
             }
-        } else if ($action === "checkAttendance") {
-            $employee_id = $_POST['employee_id'];
+            break;
 
-            // เรียกใช้ฟังก์ชัน checkAttendance
-            $attendanceStatus = $attendance->checkAttendance($employee_id);
+        case 'checkAttendance':
+            echo json_encode($attendance->checkAttendance($_POST['employee_id'] ?? 0));
+            break;
 
-            // ส่งผลลัพธ์กลับไปยัง client
-            echo json_encode($attendanceStatus);
-        } else if ($action === "checkDeparture") {
-            $employee_id = $_POST['employee_id'];
+        case 'checkDeparture':
+            echo json_encode($attendance->checkDeparture($_POST['employee_id'] ?? 0));
+            break;
 
-            // เรียกใช้ฟังก์ชัน checkDeparture
-            $departureStatus = $attendance->checkDeparture($employee_id);
-
-            // ส่งผลลัพธ์กลับไปยัง client
-            echo json_encode($departureStatus);
-        }
+        default:
+            echo json_encode(["success" => false, "message" => "Action not found", "status_code" => 404]);
+            break;
     }
 }

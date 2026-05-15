@@ -6,30 +6,21 @@ session_start();
 
 $database = new Conn();
 $db = $database->getConnection();
-
 $auth = new Auth($db);
 
-// ตรวจสอบการส่งข้อมูลจากฟอร์มว่าได้ส่งข้อมูลมาหรือไม่
-$auth->title = $_POST['title'];
-$auth->firstname = $_POST['firstname'];
-$auth->surname = $_POST['surname'];
-$auth->username = $_POST['username'];
-$auth->email = $_POST['email'];
-$auth->password = $_POST['password'];
+header('Content-Type: application/json');
 
-// หากข้อมูลครบถ้วน
-if ($auth->register()) {
-    echo json_encode([
-        "success" => true,
-        "message" => "ลงทะเบียนสำเร็จ",
-        "status_code" => 200,
-    ]);
-} else {
-    echo json_encode([
-        "success" => false,
-        "message" => "ลงทะเบียนไม่สำเร็จ",
-        "status_code" => 500,
-    ]);
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $auth->employee_code = $_POST['employee_code'] ?? null;
+    $auth->title = $_POST['title'] ?? '';
+    $auth->firstname = $_POST['firstname'] ?? '';
+    $auth->surname = $_POST['surname'] ?? '';
+    $auth->username = $_POST['username'] ?? '';
+    $auth->email = $_POST['email'] ?? '';
+    $auth->password = $_POST['password'] ?? '';
+
+    $result = $auth->register();
+    $statusCode = $result['success'] ? 200 : 400;
+    
+    echo json_encode(array_merge($result, ["status_code" => $statusCode]));
 }
-
-?>
